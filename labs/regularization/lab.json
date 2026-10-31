@@ -1,0 +1,73 @@
+{
+  "id": "regularization",
+  "title": "Regularization Lab",
+  "decks": [
+    "Regularization.pdf"
+  ],
+  "sub": "Deep Learning · Training Neural Networks: Regularization · seven hands-on lessons",
+  "stamp": "Sheet: quoting delivery times (ETA) from few orders<br>● orders the fit saw · ▲ new orders it never saw",
+  "anchor": "quoting delivery times (ETAs) from a handful of orders",
+  "navWidth": 200,
+  "built": "2026-10-31",
+  "artifact": "",
+  "deckDividers": {},
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Training Lab. Source deck: M. Soleymani, \"Training Neural Networks: Regularization\" (after CMU 11-785 and Stanford cs231n), Sharif University of Technology. Orders, ETAs, traffic feeds and networks are made-up teaching data with fixed random seeds. The \"network\" in lessons 1, 2 and 5–7 is a degree-9 polynomial (10 weights) so every fit is exact and instant; lessons 3 and 4 use a linear unit and a 6-unit ReLU layer, whose dropout averages are computed exactly rather than sampled.",
+  "lessons": [
+    {
+      "id": "overfit",
+      "n": 1,
+      "title": "Fits every order, predicts nothing",
+      "sub": "overfitting · validation error",
+      "file": "l1-overfit.jsx",
+      "slides": "3–6"
+    },
+    {
+      "id": "decay",
+      "n": 2,
+      "title": "Charge the fit for big weights",
+      "sub": "L2 · weight decay · λ",
+      "file": "l2-decay.jsx",
+      "slides": "7–10"
+    },
+    {
+      "id": "dropout",
+      "n": 3,
+      "title": "No single feed to lean on",
+      "sub": "dropout · keep prob a · redundancy",
+      "file": "l3-dropout.jsx",
+      "slides": "11–24"
+    },
+    {
+      "id": "testtime",
+      "n": 4,
+      "title": "Test time: average the masks",
+      "sub": "scale by a · inverted dropout",
+      "file": "l4-testtime.jsx",
+      "slides": "25–35"
+    },
+    {
+      "id": "augment",
+      "n": 5,
+      "title": "Made-up orders that tell the truth",
+      "sub": "augmentation · train noise, test average",
+      "file": "l5-augment.jsx",
+      "slides": "39–54"
+    },
+    {
+      "id": "early",
+      "n": 6,
+      "title": "Stop before it memorises",
+      "sub": "early stopping · patience",
+      "file": "l6-early.jsx",
+      "slides": "55"
+    },
+    {
+      "id": "ensemble",
+      "n": 7,
+      "title": "Many wrong models, one good average",
+      "sub": "bagging · ensembles · Polyak",
+      "file": "l7-ensemble.jsx",
+      "slides": "20–24, 56–59"
+    }
+  ]
+}

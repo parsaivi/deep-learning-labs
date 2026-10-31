@@ -1,0 +1,65 @@
+{
+  "id": "cnn",
+  "title": "CNN Lab",
+  "decks": [
+    "CNN.pdf"
+  ],
+  "sub": "Deep Learning · Convolutional Neural Networks · six hands-on lessons",
+  "stamp": "Sheet: checking proof-of-delivery photos<br>Is there a parcel at the door, and where?",
+  "anchor": "checking couriers' proof-of-delivery photos for a parcel",
+  "navWidth": 200,
+  "built": "2026-10-31",
+  "artifact": "",
+  "deckDividers": {},
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Regularization Lab. Source deck: M. Soleymani, \"Convolutional Neural Networks\" (after Stanford cs231n and CMU 11-785), Sharif University of Technology. The doorstep photos are made-up 10–12 pixel images, the colours are invented, and every filter is hand-set rather than trained, so you can see exactly what each weight does. Weight counts in lessons 5 and 6 are exact for the layer shapes shown.",
+  "lessons": [
+    {
+      "id": "shift",
+      "n": 1,
+      "title": "Move the parcel, keep the answer",
+      "sub": "shift invariance · locality · sharing",
+      "file": "l1-shift.jsx",
+      "slides": "5–15"
+    },
+    {
+      "id": "filter",
+      "n": 2,
+      "title": "A filter is a perceptron that scans",
+      "sub": "convolution · activation map · ReLU",
+      "file": "l2-filter.jsx",
+      "slides": "15–17, 23–28, 40–42"
+    },
+    {
+      "id": "channels",
+      "n": 3,
+      "title": "Filters reach through every channel",
+      "sub": "depth · K maps · 1×1 · #params",
+      "file": "l3-channels.jsx",
+      "slides": "18–37, 43–62, 84–90"
+    },
+    {
+      "id": "size",
+      "n": 4,
+      "title": "Stride and padding set the size",
+      "sub": "(N + 2P − F)/S + 1",
+      "file": "l4-size.jsx",
+      "slides": "63–88"
+    },
+    {
+      "id": "receptive",
+      "n": 5,
+      "title": "Small filters, stacked, see far",
+      "sub": "receptive field · 3×3 stacks",
+      "file": "l5-receptive.jsx",
+      "slides": "91–113"
+    },
+    {
+      "id": "pool",
+      "n": 6,
+      "title": "Pool: keep the vote, drop the where",
+      "sub": "max / mean / p-norm · full ConvNet",
+      "file": "l6-pool.jsx",
+      "slides": "114–133"
+    }
+  ]
+}

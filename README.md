@@ -11,6 +11,9 @@ You drag, tune and break things before the idea gets its name.
 | [MLP & Backprop Lab](https://parsaivi.github.io/deep-learning-labs/mlp-backprop/) | MLP, MLP & Back-prop | XOR & hidden layers · universal classifier · universal approximator · depth vs width · smooth activations & loss · computational graph · backprop for a layer |
 | [Optimization Lab](https://parsaivi.github.io/deep-learning-labs/optimization-1/) | Optimization I | step size vs curvature · condition number · Newton & saddles · decaying η · momentum & Nesterov · Adagrad / RMSprop / Adam |
 | [Optimization Lab II](https://parsaivi.github.io/deep-learning-labs/optimization-2/) | Optimization II | SGD vs batch & sample order · why SGD never settles · mini-batch size · reading loss curves · warmup & schedules · L2 vs cross-entropy |
+| [Training Lab](https://parsaivi.github.io/deep-learning-labs/training/) | Training NNs: Practical Issues, Batch Normalization | saturation & dead units · centering inputs · symmetry · Xavier/Kaiming init · random search · BN batch stats · γ/β · backprop through BN · BN at test time · BN forgives bad init |
+| [Regularization Lab](https://parsaivi.github.io/deep-learning-labs/regularization/) | Regularization | overfitting & validation · L2 / weight decay · dropout & redundancy · dropout at test time · augmentation & the noise pattern · early stopping · bagging, ensembles & Polyak averaging |
+| [CNN Lab](https://parsaivi.github.io/deep-learning-labs/cnn/) | CNN | shift invariance · filters as scanning perceptrons · channels & #params · stride & padding · receptive field · pooling & full ConvNet design |
 
 Visual explainer: [Lines that learn: MLPs and back-propagation](https://parsaivi.github.io/deep-learning-labs/explainers/mlp-backprop.html)
 

@@ -46,7 +46,7 @@ Notes:
 |---|---|
 | Background | Knows the chain rule and linear algebra; no intuition for networks yet |
 | Theme | Blueprint (dark navy drafting sheet, cyan + amber) |
-| Running story (anchor) | Delivery app: MLP = city delivery zones; Optimization I & II = fitting delivery fees (per-km rate, base fee) |
+| Running story (anchor) | Delivery app: MLP = city delivery zones; Optimization I & II = fitting delivery fees (per-km rate, base fee); Training = the ETA network; Regularization = quoting ETAs from few orders; CNN = checking proof-of-delivery photos for a parcel |
 | Depth | One lesson per big idea, about 6 per deck, each Puzzle → Explore → Name → Challenge |
 
 Change any row here and the next lab follows it.
