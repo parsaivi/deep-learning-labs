@@ -1,0 +1,101 @@
+{
+  "id": "training",
+  "title": "Training Lab",
+  "decks": [
+    "Training Neural Networks_Practical Issues.pdf",
+    "Batch Normalization.pdf"
+  ],
+  "sub": "Deep Learning · Training Neural Networks: Practical Issues & Batch Normalization · ten hands-on lessons",
+  "stamp": "Sheet: the delivery-time (ETA) network<br>Dots = orders · <b>◆ = the order you follow</b> · ▲ = outside the healthy band",
+  "anchor": "training the delivery-time (ETA) network",
+  "navWidth": 200,
+  "built": "2026-10-31",
+  "artifact": "",
+  "deckDividers": {
+    "1": "Deck 1 · Practical issues: activations, inputs, init, hyperparameters",
+    "6": "Deck 2 · Batch normalization"
+  },
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Optimization Labs. Source decks: M. Soleymani, \"Training Neural Networks: Practical Issues\" (after Stanford cs231n) and \"Training Neural Networks: Batch Normalization\" (after CMU 11-785 and cs231n), Sharif University of Technology. Orders, ETAs and the networks are made-up teaching models with fixed random seeds: lessons 3, 4 and 10 run real forward passes or gradient descent; the accuracy map of lesson 5 and the training drift of lesson 9 are hand-made curves.",
+  "lessons": [
+    {
+      "id": "saturate",
+      "n": 1,
+      "title": "Flat ends kill the signal",
+      "sub": "sigmoid · tanh · ReLU · dead units",
+      "file": "l1-saturate.jsx",
+      "slides": "5–23"
+    },
+    {
+      "id": "center",
+      "n": 2,
+      "title": "Center the inputs",
+      "sub": "all-positive zig-zag · μ, σ",
+      "file": "l2-center.jsx",
+      "slides": "11–13, 24–31"
+    },
+    {
+      "id": "twins",
+      "n": 3,
+      "title": "Identical twins never part",
+      "sub": "constant init · symmetry",
+      "file": "l3-twins.jsx",
+      "slides": "32–35"
+    },
+    {
+      "id": "init",
+      "n": 4,
+      "title": "Keep the signal the same size",
+      "sub": "Xavier · Kaiming · fan_in",
+      "file": "l4-init.jsx",
+      "slides": "35–45"
+    },
+    {
+      "id": "search",
+      "n": 5,
+      "title": "Random beats grid",
+      "sub": "random search · coarse → fine",
+      "file": "l5-search.jsx",
+      "slides": "46–64"
+    },
+    {
+      "id": "batch",
+      "n": 6,
+      "title": "Every batch to the same place",
+      "sub": "covariate shift · μ_B, σ_B · 1/√B",
+      "file": "l6-batch.jsx",
+      "slides": "3–15, 19"
+    },
+    {
+      "id": "gamma",
+      "n": 7,
+      "title": "γ and β give the choice back",
+      "sub": "scale & shift · identity",
+      "file": "l7-gamma.jsx",
+      "slides": "16–20"
+    },
+    {
+      "id": "backprop",
+      "n": 8,
+      "title": "One order's gradient feels the batch",
+      "sub": "backprop through BN",
+      "file": "l8-backprop.jsx",
+      "slides": "21–37"
+    },
+    {
+      "id": "inference",
+      "n": 9,
+      "title": "Test time: no batch to lean on",
+      "sub": "running averages · β",
+      "file": "l9-inference.jsx",
+      "slides": "38–40"
+    },
+    {
+      "id": "forgive",
+      "n": 10,
+      "title": "BN forgives a bad init",
+      "sub": "scale invariance · where to put BN",
+      "file": "l10-forgive.jsx",
+      "slides": "14, 40–42"
+    }
+  ]
+}
