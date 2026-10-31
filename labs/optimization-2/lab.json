@@ -1,0 +1,65 @@
+{
+  "id": "optimization-2",
+  "title": "Optimization Lab II",
+  "decks": [
+    "Optimization II.pdf"
+  ],
+  "sub": "Deep Learning · Training Neural Networks: Optimization II · six hands-on lessons",
+  "stamp": "Sheet: fitting delivery fees from the order log<br>Maps: loss over rate &amp; fee · <b>brighter = lower loss</b> · + = best fit",
+  "anchor": "fitting delivery fees from an order log",
+  "navWidth": 190,
+  "built": "2026-10-30",
+  "artifact": "https://claude.ai/artifact/1FqhhWBXCdTiWsfSnz8VUe",
+  "deckDividers": {},
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Optimization Lab for part I. Source deck: M. Soleymani, \"Training Neural Networks: Optimization\" (Optimization II), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). Orders, fees and the networks in lessons 4–5 are made-up teaching models: lessons 3 and 5 plot the exact expected SGD loss, the others run real SGD with a fixed random seed.",
+  "lessons": [
+    {
+      "id": "sgd",
+      "n": 1,
+      "title": "One order at a time",
+      "sub": "batch vs SGD · order of samples",
+      "file": "l1-sgd.jsx",
+      "slides": "3–19"
+    },
+    {
+      "id": "decay",
+      "n": 2,
+      "title": "Why SGD never settles",
+      "sub": "constant η jitters · how fast to shrink",
+      "file": "l2-decay.jsx",
+      "slides": "17–20"
+    },
+    {
+      "id": "batch",
+      "n": 3,
+      "title": "How many orders per update?",
+      "sub": "var/b · GPU width · η ∝ b",
+      "file": "l3-batch.jsx",
+      "slides": "21–48, 65"
+    },
+    {
+      "id": "curve",
+      "n": 4,
+      "title": "Read the loss curve",
+      "sub": "η too low / too high · update ratio",
+      "file": "l4-curve.jsx",
+      "slides": "52–58"
+    },
+    {
+      "id": "warmup",
+      "n": 5,
+      "title": "Warm up, then cool down",
+      "sub": "warmup · cosine · linear · 1/√t",
+      "file": "l5-warmup.jsx",
+      "slides": "59–65"
+    },
+    {
+      "id": "loss",
+      "n": 6,
+      "title": "Steep far, gentle near",
+      "sub": "L2 vs cross-entropy · sigmoid",
+      "file": "l6-loss.jsx",
+      "slides": "66–76"
+    }
+  ]
+}

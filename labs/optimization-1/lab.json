@@ -1,0 +1,65 @@
+{
+  "id": "optimization-1",
+  "title": "Optimization Lab",
+  "decks": [
+    "Optimization I.pdf"
+  ],
+  "sub": "Deep Learning · Training Neural Networks: Optimization I · six hands-on lessons",
+  "stamp": "Sheet: fitting delivery fees<br>Maps: loss over two rates · <b>brighter = lower loss</b> · + = best",
+  "anchor": "fitting delivery-fee rates",
+  "navWidth": 190,
+  "built": "2026-10-30",
+  "artifact": "https://claude.ai/artifact/WiiMdi4GsF6acwF6QRzBZU",
+  "deckDividers": {},
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. Source deck: M. Soleymani, \"Training Neural Networks: Optimization\" (Optimization I), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The deliveries, fees and loss surfaces are made-up teaching data.",
+  "lessons": [
+    {
+      "id": "step",
+      "n": 1,
+      "title": "How big a step?",
+      "sub": "η vs curvature · η_X = 1/E''",
+      "file": "l1-step.jsx",
+      "slides": "12–16"
+    },
+    {
+      "id": "valley",
+      "n": 2,
+      "title": "One η, many directions",
+      "sub": "eigenvalues · condition number",
+      "file": "l2-valley.jsx",
+      "slides": "17–24"
+    },
+    {
+      "id": "newton",
+      "n": 3,
+      "title": "Make the bowl round",
+      "sub": "A^½ rescaling · Hessian · saddles",
+      "file": "l3-newton.jsx",
+      "slides": "23–47"
+    },
+    {
+      "id": "sched",
+      "n": 4,
+      "title": "Big steps first, small later",
+      "sub": "rugged loss · decaying η",
+      "file": "l4-sched.jsx",
+      "slides": "3–8, 48–54"
+    },
+    {
+      "id": "momentum",
+      "n": 5,
+      "title": "Let the zig-zags cancel",
+      "sub": "momentum · Nesterov",
+      "file": "l5-momentum.jsx",
+      "slides": "55–75"
+    },
+    {
+      "id": "adaptive",
+      "n": 6,
+      "title": "A step size per weight",
+      "sub": "Adagrad · RMSprop · Adam",
+      "file": "l6-adaptive.jsx",
+      "slides": "76–92"
+    }
+  ]
+}

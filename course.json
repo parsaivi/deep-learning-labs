@@ -1,0 +1,135 @@
+{
+  "course": "Deep Learning (CE, 1405-1)",
+  "lecturer": "M. Soleymani, Sharif University of Technology",
+  "note": "Deck order is a best guess at the course order; edit freely. A deck is 'done' when some lab lists it in its lab.json `decks`.",
+  "decks": [
+    {
+      "file": "Introduction.pdf",
+      "title": "Introduction",
+      "slides": 58
+    },
+    {
+      "file": "ML Review.pdf",
+      "title": "ML Review",
+      "slides": 46
+    },
+    {
+      "file": "MLP.pdf",
+      "title": "MLP",
+      "slides": 104
+    },
+    {
+      "file": "MLP & Back-prop.pdf",
+      "title": "MLP & Back-prop",
+      "slides": 100
+    },
+    {
+      "file": "Optimization I.pdf",
+      "title": "Optimization I",
+      "slides": 92
+    },
+    {
+      "file": "Optimization II.pdf",
+      "title": "Optimization II",
+      "slides": 76
+    },
+    {
+      "file": "Training Neural Networks_Practical Issues.pdf",
+      "title": "Training Neural Networks · Practical Issues",
+      "slides": 67
+    },
+    {
+      "file": "Batch Normalization.pdf",
+      "title": "Batch Normalization",
+      "slides": 43
+    },
+    {
+      "file": "Regularization.pdf",
+      "title": "Regularization",
+      "slides": 60
+    },
+    {
+      "file": "CNN.pdf",
+      "title": "CNN",
+      "slides": 134
+    },
+    {
+      "file": "CNN_Case Studies.pdf",
+      "title": "CNN · Case Studies",
+      "slides": 90
+    },
+    {
+      "file": "CNN_Vision Applications.pdf",
+      "title": "CNN · Vision Applications",
+      "slides": 93
+    },
+    {
+      "file": "RNN I.pdf",
+      "title": "RNN I",
+      "slides": 145
+    },
+    {
+      "file": "RNN_II.pdf",
+      "title": "RNN · II",
+      "slides": 93
+    },
+    {
+      "file": "Attention & Transformer.pdf",
+      "title": "Attention & Transformer",
+      "slides": 114
+    },
+    {
+      "file": "Attention & Transformer II.pdf",
+      "title": "Attention & Transformer II",
+      "slides": 45
+    },
+    {
+      "file": "GNN.pdf",
+      "title": "GNN",
+      "slides": 36
+    },
+    {
+      "file": "Self-supervised.pdf",
+      "title": "Self-supervised",
+      "slides": 68
+    },
+    {
+      "file": "Text & image.pdf",
+      "title": "Text & image",
+      "slides": 34
+    },
+    {
+      "file": "Generative Models I.pdf",
+      "title": "Generative Models I",
+      "slides": 99
+    },
+    {
+      "file": "Generative Models II.pdf",
+      "title": "Generative Models II",
+      "slides": 68
+    },
+    {
+      "file": "Diffusion Models.pdf",
+      "title": "Diffusion Models",
+      "slides": 77
+    },
+    {
+      "file": "Adversarial Robustness.pdf",
+      "title": "Adversarial Robustness",
+      "slides": 48
+    }
+  ],
+  "explainers": [
+    {
+      "file": "mlp-backprop.html",
+      "title": "Lines that learn: MLPs and back-propagation",
+      "decks": [
+        "MLP.pdf",
+        "MLP & Back-prop.pdf"
+      ],
+      "kind": "visual-explainer (scrolling page)",
+      "built": "2026-10-30",
+      "artifact": "https://claude.ai/artifact/QzXRnD7N7fBnq1YAWAMGyu"
+    }
+  ]
+}

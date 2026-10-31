@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Learning Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Same Blueprint sheet as the labs: course map down the page, one card per lab. Single dark look by choice. */
+  :root {
+    --bg: #071528;
+    --panel: #0b1f3a;
+    --text: #e6f0ff;
+    --muted: #9db3d1;
+    --accent: #4cc9f0;
+    --amber: #ffc857;
+    --line: #24497a;
+    --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+    --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--body); }
+  body {
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(76, 201, 240, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(76, 201, 240, 0.045) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 22px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px)); }
+  header { display: flex; gap: 8px 28px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  h1 { font-family: var(--display); font-size: 34px; margin: 0; font-weight: 700; letter-spacing: 0.3px; }
+  .sub { color: var(--muted); font-size: 14.5px; margin-top: 4px; max-width: 640px; line-height: 1.5; }
+  .stamp { font-family: var(--mono); font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); padding: 6px 10px; line-height: 1.6; letter-spacing: 0.4px; text-transform: uppercase; }
+  .stamp b { color: var(--accent); font-weight: 500; }
+  h2 { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase; margin: 26px 0 10px; }
+  .bar { display: flex; height: 8px; gap: 2px; margin: 14px 0 4px; }
+  .bar i { flex: 1; background: var(--line); border-radius: 1px; }
+  .bar i.done { background: var(--accent); }
+  .barlabel { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .card { background: rgba(11, 31, 58, 0.82); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .card:hover { border-color: var(--accent); }
+  .card h3 { font-family: var(--display); font-size: 21px; margin: 0; letter-spacing: 0.2px; }
+  .card h3 a { color: var(--text); text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .meta { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.3px; }
+  .card ol { margin: 2px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+  .card li a { display: flex; gap: 10px; align-items: baseline; text-decoration: none; color: var(--text); font-size: 14px; padding: 3px 0; border-top: 1px dashed rgba(36, 73, 122, 0.7); }
+  .card li a:hover b { color: var(--accent); }
+  .card li .n { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 16px; flex: none; }
+  .card li b { font-weight: 500; flex: 1; min-width: 0; }
+  .card li .sl { font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+  .links { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin-top: auto; padding-top: 4px; }
+  .map { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
+  .deck { display: flex; gap: 10px; align-items: baseline; border: 1px solid var(--line); border-radius: 3px; padding: 7px 10px; font-size: 13.5px; color: var(--muted); min-width: 0; }
+  .deck .n { font-family: var(--mono); font-size: 11px; width: 18px; flex: none; }
+  .deck span.t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .deck .st { font-family: var(--mono); font-size: 10.5px; white-space: nowrap; }
+  .deck.done { border-color: var(--accent); color: var(--text); background: rgba(76, 201, 240, 0.08); }
+  .deck.done .st { color: var(--accent); }
+  .deck.done a { color: inherit; text-decoration: none; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 30px; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 10px; }
+  a:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  @media (max-width: 520px) { h1 { font-size: 28px; } .cards { grid-template-columns: 1fr; } }
+</style>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Deep Learning Labs</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </header>
+  <div class="bar" id="bar" aria-hidden="true"></div>
+  <div class="barlabel" id="barlabel"></div>
+
+  <h2>Interactive labs · Puzzle → Explore → Name → Challenge</h2>
+  <div class="cards" id="labs"></div>
+
+  <h2 id="xh">Visual explainers · read-through pages</h2>
+  <div class="cards" id="explainers"></div>
+
+  <h2>Course map · every deck</h2>
+  <div class="map" id="map"></div>
+
+  <footer>
+    Built with Claude using the <a href="https://github.com/Wamikmk/interactive-educator">interactive-educator</a> skill (CC BY 4.0) and the visual-explainer skill.
+    All deliveries, fees and networks in the labs are made-up teaching data. Slides belong to their authors and are not included here.
+    <a href="https://github.com/parsaivi/deep-learning-labs">Source, build tools and the guide for adding a lab</a>.
+  </footer>
+</div>
+<script>
+(function () {
+  var D = {"course":{"course":"Deep Learning (CE, 1405-1)","lecturer":"M. Soleymani, Sharif University of Technology","note":"Deck order is a best guess at the course order; edit freely. A deck is 'done' when some lab lists it in its lab.json `decks`.","decks":[{"file":"Introduction.pdf","title":"Introduction","slides":58},{"file":"ML Review.pdf","title":"ML Review","slides":46},{"file":"MLP.pdf","title":"MLP","slides":104},{"file":"MLP & Back-prop.pdf","title":"MLP & Back-prop","slides":100},{"file":"Optimization I.pdf","title":"Optimization I","slides":92},{"file":"Optimization II.pdf","title":"Optimization II","slides":76},{"file":"Training Neural Networks_Practical Issues.pdf","title":"Training Neural Networks · Practical Issues","slides":67},{"file":"Batch Normalization.pdf","title":"Batch Normalization","slides":43},{"file":"Regularization.pdf","title":"Regularization","slides":60},{"file":"CNN.pdf","title":"CNN","slides":134},{"file":"CNN_Case Studies.pdf","title":"CNN · Case Studies","slides":90},{"file":"CNN_Vision Applications.pdf","title":"CNN · Vision Applications","slides":93},{"file":"RNN I.pdf","title":"RNN I","slides":145},{"file":"RNN_II.pdf","title":"RNN · II","slides":93},{"file":"Attention & Transformer.pdf","title":"Attention & Transformer","slides":114},{"file":"Attention & Transformer II.pdf","title":"Attention & Transformer II","slides":45},{"file":"GNN.pdf","title":"GNN","slides":36},{"file":"Self-supervised.pdf","title":"Self-supervised","slides":68},{"file":"Text & image.pdf","title":"Text & image","slides":34},{"file":"Generative Models I.pdf","title":"Generative Models I","slides":99},{"file":"Generative Models II.pdf","title":"Generative Models II","slides":68},{"file":"Diffusion Models.pdf","title":"Diffusion Models","slides":77},{"file":"Adversarial Robustness.pdf","title":"Adversarial Robustness","slides":48}],"explainers":[{"file":"mlp-backprop.html","title":"Lines that learn: MLPs and back-propagation","decks":["MLP.pdf","MLP & Back-prop.pdf"],"kind":"visual-explainer (scrolling page)","built":"2026-10-30","artifact":"https://claude.ai/artifact/QzXRnD7N7fBnq1YAWAMGyu"}]},"labs":[{"id":"mlp-backprop","title":"MLP & Backprop Lab","sub":"Deep Learning · Multi-Layer Networks & Back-Propagation · seven hands-on lessons","decks":["MLP.pdf","MLP & Back-prop.pdf"],"anchor":"city delivery zones","built":"2026-10-29","artifact":"https://claude.ai/artifact/BN3x3KpkkCdBqQux1PVZp2","lessons":[{"id":"xor","n":1,"title":"One street is not enough","sub":"perceptron · XOR · hidden layer","slides":"MLP"},{"id":"zones","n":2,"title":"Fence any zone","sub":"polygon net · universal classifier","slides":"MLP 45–67"},{"id":"curves","n":3,"title":"Draw any fee curve","sub":"pulses · universal approximator","slides":"MLP 85–90"},{"id":"depth","n":4,"title":"Wide or deep?","sub":"parity · depth vs width","slides":"MLP 23–41"},{"id":"smooth","n":5,"title":"Why the staircase can't learn","sub":"activations · loss · softmax","slides":"Back-prop 5–20"},{"id":"graph","n":6,"title":"Pass the blame backward","sub":"computational graph · chain rule","slides":"Back-prop 28–64"},{"id":"layer","n":7,"title":"Backprop for a whole layer","sub":"δ aᵀ · shapes · training","slides":"Back-prop 65–100"}]},{"id":"optimization-1","title":"Optimization Lab","sub":"Deep Learning · Training Neural Networks: Optimization I · six hands-on lessons","decks":["Optimization I.pdf"],"anchor":"fitting delivery-fee rates","built":"2026-10-30","artifact":"https://claude.ai/artifact/WiiMdi4GsF6acwF6QRzBZU","lessons":[{"id":"step","n":1,"title":"How big a step?","sub":"η vs curvature · η_X = 1/E''","slides":"12–16"},{"id":"valley","n":2,"title":"One η, many directions","sub":"eigenvalues · condition number","slides":"17–24"},{"id":"newton","n":3,"title":"Make the bowl round","sub":"A^½ rescaling · Hessian · saddles","slides":"23–47"},{"id":"sched","n":4,"title":"Big steps first, small later","sub":"rugged loss · decaying η","slides":"3–8, 48–54"},{"id":"momentum","n":5,"title":"Let the zig-zags cancel","sub":"momentum · Nesterov","slides":"55–75"},{"id":"adaptive","n":6,"title":"A step size per weight","sub":"Adagrad · RMSprop · Adam","slides":"76–92"}]},{"id":"optimization-2","title":"Optimization Lab II","sub":"Deep Learning · Training Neural Networks: Optimization II · six hands-on lessons","decks":["Optimization II.pdf"],"anchor":"fitting delivery fees from an order log","built":"2026-10-30","artifact":"https://claude.ai/artifact/1FqhhWBXCdTiWsfSnz8VUe","lessons":[{"id":"sgd","n":1,"title":"One order at a time","sub":"batch vs SGD · order of samples","slides":"3–19"},{"id":"decay","n":2,"title":"Why SGD never settles","sub":"constant η jitters · how fast to shrink","slides":"17–20"},{"id":"batch","n":3,"title":"How many orders per update?","sub":"var/b · GPU width · η ∝ b","slides":"21–48, 65"},{"id":"curve","n":4,"title":"Read the loss curve","sub":"η too low / too high · update ratio","slides":"52–58"},{"id":"warmup","n":5,"title":"Warm up, then cool down","sub":"warmup · cosine · linear · 1/√t","slides":"59–65"},{"id":"loss","n":6,"title":"Steep far, gentle near","sub":"L2 vs cross-entropy · sigmoid","slides":"66–76"}]}]};
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function t(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  var byDeck = {};
+  D.labs.forEach(function (l) { l.decks.forEach(function (f) { byDeck[f] = l; }); });
+  var done = D.course.decks.filter(function (d) { return byDeck[d.file]; }).length;
+  var lessons = D.labs.reduce(function (s, l) { return s + l.lessons.length; }, 0);
+  document.getElementById("sub").innerHTML = t(D.course.course) + " · slides by " + t(D.course.lecturer) + ". Each lab turns one lecture deck into hands-on lessons you can drag, tune and break.";
+  document.getElementById("stamp").innerHTML = "Sheet: course index<br><b>" + D.labs.length + " labs · " + lessons + " lessons</b> · " + done + " / " + D.course.decks.length + " decks covered";
+  var bar = document.getElementById("bar");
+  D.course.decks.forEach(function (d) { bar.appendChild(el("i", byDeck[d.file] ? "done" : "")); });
+  document.getElementById("barlabel").textContent = done + " of " + D.course.decks.length + " decks have a lab";
+
+  var order = {};
+  D.course.decks.forEach(function (d, i) { order[d.file] = i; });
+  D.labs.sort(function (a, b) { return order[a.decks[0]] - order[b.decks[0]]; });
+  var box = document.getElementById("labs");
+  D.labs.forEach(function (l) {
+    var c = el("article", "card");
+    c.appendChild(el("div", "meta", t(l.decks.map(function (f) { return f.replace(/\.pdf$/, ""); }).join(" + ")) + " · built " + t(l.built)));
+    c.appendChild(el("h3", null, '<a href="' + l.id + '/">' + t(l.title) + "</a>"));
+    c.appendChild(el("div", "meta", "story: " + t(l.anchor)));
+    var ol = el("ol");
+    l.lessons.forEach(function (x) {
+      ol.appendChild(el("li", null, '<a href="' + l.id + "/#" + x.id + '"><span class="n">' + x.n + "</span><b>" + t(x.title) + '</b><span class="sl">' + (x.slides ? "sl. " + t(x.slides) : "") + "</span></a>"));
+    });
+    c.appendChild(ol);
+    c.appendChild(el("div", "links", '<a href="' + l.id + '/">open lab →</a>' + (l.artifact ? '<a href="' + l.artifact + '">claude.ai copy</a>' : "")));
+    box.appendChild(c);
+  });
+
+  var xb = document.getElementById("explainers");
+  (D.course.explainers || []).forEach(function (x) {
+    var c = el("article", "card");
+    c.appendChild(el("div", "meta", t(x.decks.map(function (f) { return f.replace(/\.pdf$/, ""); }).join(" + ")) + " · " + t(x.kind)));
+    c.appendChild(el("h3", null, '<a href="explainers/' + x.file + '">' + t(x.title) + "</a>"));
+    c.appendChild(el("div", "links", '<a href="explainers/' + x.file + '">read →</a>' + (x.artifact ? '<a href="' + x.artifact + '">claude.ai copy</a>' : "")));
+    xb.appendChild(c);
+  });
+  if (!(D.course.explainers || []).length) { document.getElementById("xh").hidden = true; }
+
+  var map = document.getElementById("map");
+  D.course.decks.forEach(function (d, i) {
+    var l = byDeck[d.file];
+    var inner = '<span class="n">' + String(i + 1).padStart(2, "0") + '</span><span class="t">' + t(d.title) + '</span><span class="st">' + (l ? "lab ✓" : d.slides + " sl.") + "</span>";
+    var e = el("div", "deck" + (l ? " done" : ""), l ? "" : inner);
+    if (l) { var a = el("a", null, inner); a.href = l.id + "/"; a.style.display = "contents"; e.appendChild(a); }
+    map.appendChild(e);
+  });
+})();
+</script>

@@ -1,0 +1,77 @@
+{
+  "id": "mlp-backprop",
+  "title": "MLP & Backprop Lab",
+  "decks": [
+    "MLP.pdf",
+    "MLP & Back-prop.pdf"
+  ],
+  "sub": "Deep Learning · Multi-Layer Networks & Back-Propagation · seven hands-on lessons",
+  "stamp": "Sheet: city delivery zones<br>Scale: 1 map = 10 km × 10 km · <b>● served</b> · □ not served",
+  "anchor": "city delivery zones",
+  "navWidth": 170,
+  "built": "2026-10-29",
+  "artifact": "https://claude.ai/artifact/BN3x3KpkkCdBqQux1PVZp2",
+  "deckDividers": {
+    "1": "Deck 1 · Multi-Layer Networks: what an MLP can represent",
+    "5": "Deck 2 · Back-Propagation: how an MLP learns"
+  },
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. Source decks: M. Soleymani, \"Multi-Layer Networks\" and \"Multi-Layer Networks &amp; Back-Propagation\", Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The delivery addresses, fees and zones are made-up teaching data.",
+  "lessons": [
+    {
+      "id": "xor",
+      "n": 1,
+      "title": "One street is not enough",
+      "sub": "perceptron · XOR · hidden layer",
+      "file": "l1-xor.jsx",
+      "slides": "MLP"
+    },
+    {
+      "id": "zones",
+      "n": 2,
+      "title": "Fence any zone",
+      "sub": "polygon net · universal classifier",
+      "file": "l2-zones.jsx",
+      "slides": "MLP 45–67"
+    },
+    {
+      "id": "curves",
+      "n": 3,
+      "title": "Draw any fee curve",
+      "sub": "pulses · universal approximator",
+      "file": "l3-curves.jsx",
+      "slides": "MLP 85–90"
+    },
+    {
+      "id": "depth",
+      "n": 4,
+      "title": "Wide or deep?",
+      "sub": "parity · depth vs width",
+      "file": "l4-depth.jsx",
+      "slides": "MLP 23–41"
+    },
+    {
+      "id": "smooth",
+      "n": 5,
+      "title": "Why the staircase can't learn",
+      "sub": "activations · loss · softmax",
+      "file": "l5-smooth.jsx",
+      "slides": "Back-prop 5–20"
+    },
+    {
+      "id": "graph",
+      "n": 6,
+      "title": "Pass the blame backward",
+      "sub": "computational graph · chain rule",
+      "file": "l6-graph.jsx",
+      "slides": "Back-prop 28–64"
+    },
+    {
+      "id": "layer",
+      "n": 7,
+      "title": "Backprop for a whole layer",
+      "sub": "δ aᵀ · shapes · training",
+      "file": "l7-layer.jsx",
+      "slides": "Back-prop 65–100"
+    }
+  ]
+}
