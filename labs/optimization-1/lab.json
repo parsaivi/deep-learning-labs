@@ -5,13 +5,13 @@
     "Optimization I.pdf"
   ],
   "sub": "Deep Learning · Training Neural Networks: Optimization I · six hands-on lessons",
-  "stamp": "Sheet: fitting delivery fees<br>Maps: loss over two rates · <b>brighter = lower loss</b> · + = best",
-  "anchor": "fitting delivery-fee rates",
+  "stamp": "Maps: loss over two weights · <b>brighter = lower loss</b> · + = minimum",
+  "anchor": "the loss surface itself (no story)",
   "navWidth": 190,
   "built": "2026-10-30",
   "artifact": "https://claude.ai/artifact/WiiMdi4GsF6acwF6QRzBZU",
   "deckDividers": {},
-  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. Source deck: M. Soleymani, \"Training Neural Networks: Optimization\" (Optimization I), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The deliveries, fees and loss surfaces are made-up teaching data.",
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. Source deck: M. Soleymani, \"Training Neural Networks: Optimization\" (Optimization I), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The loss surfaces and datasets are made-up teaching examples.",
   "lessons": [
     {
       "id": "step",

@@ -5,11 +5,11 @@ import { THEME, MONO } from "./common";
 // Aha: the right step size is set by how sharply the loss curves, not by the data or the gradient.
 // For a parabola, eta_opt = 1 / E'' lands in one step; past 2 eta_opt every step overshoots further.
 
-// eight past deliveries: distance in km, fee in euro. Model: fee = r * distance.
+// eight training points (x, y). Model: y_hat = w * x, squared-error loss. "4x" = the same data with every input scaled by 4.
 const DIST = [1.2, 1.9, 2.4, 3.0, 3.5, 4.1, 4.6, 5.3];
 const NOISE = [0.3, -0.2, 0.4, -0.3, 0.1, 0.5, -0.4, 0.2];
 const FEE = DIST.map((d, i) => 1.6 * d + NOISE[i]);
-const UNITS = { km: { s: 1, name: "km", per: "€/km" }, blk: { s: 4, name: "block (250 m)", per: "€/block" } };
+const UNITS = { km: { s: 1, name: "x" }, blk: { s: 4, name: "4x" } };
 function curvature(u) {
   let a = 0;
   for (const d of DIST) a += (d * UNITS[u].s) * (d * UNITS[u].s);
@@ -52,7 +52,7 @@ const LOSS = { km: lossFor("km"), blk: lossFor("blk") };
 const XR = [-0.6, 3.6];
 const R0 = 0.3;
 
-// challenge: distances logged in miles, robust log-cosh loss (big misses count less than squared)
+// challenge: inputs scaled by 1/1.609 and a log-cosh loss (not a parabola, so E'' changes with w)
 const MILES = DIST.map((d) => d / 1.609);
 const FEE_C = DIST.map((d, i) => 1.6 * d + 2 * NOISE[i]);
 function robustLoss(r) {
@@ -145,8 +145,8 @@ export default function StepLesson({ initialScreen }) {
   const unitPills = (
     <Pills
       options={[
-        ["km", "distance in km"],
-        ["blk", "distance in blocks"],
+        ["km", "inputs x"],
+        ["blk", "inputs 4x"],
       ]}
       value={unit}
       onPick={pickUnit}
@@ -158,19 +158,19 @@ export default function StepLesson({ initialScreen }) {
       xr={XR}
       yr={[0, 9]}
       pts={vis}
-      xl={"rate r (" + UNITS[unit].per + ")"}
-      label={"mean squared fee error E(r), distances in " + UNITS[unit].name}
-      vlines={screen >= 1 ? [{ x: rStar, color: THEME.muted, label: "best r" }] : []}
+      xl="weight w"
+      label={"loss E(w) = mean ½(y − w·" + UNITS[unit].name + ")²"}
+      vlines={screen >= 1 ? [{ x: rStar, color: THEME.muted, label: "w*" }] : []}
     />
   );
   const rList = (
     <div style={{ fontFamily: MONO, fontSize: 12.5, lineHeight: 1.6, color: THEME.text }}>
       {pts.slice(0, shown + 1).map((r, k) => (
         <span key={k} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
-          r{k}={fmt(r, 2)}
+          w{k}={fmt(r, 2)}
         </span>
       ))}
-      {diverged && <div style={{ color: THEME.warn }}>✕ the steps grow every time: diverging</div>}
+      {diverged && <div style={{ color: THEME.warn }}>✕ each step lands farther from w*: diverging</div>}
     </div>
   );
 
@@ -178,7 +178,9 @@ export default function StepLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        The fee model is fee = r × distance, and gradient descent fits the rate r. Last month distances were logged in km and η = 0.05 worked nicely. The new dispatch app logs distances in city blocks (4 blocks per km). It's the same deliveries and the same η. Switch units and replay the steps. Why does one setting settle and the other blow up?
+        <b>Where we are:</b> the deck starts its tour of convergence with the simplest case, gradient descent on a one-weight quadratic loss (slides 12–16). Before anything harder we need one answer: for a given loss, which learning rates η converge, and which one is best?
+        <br />
+        <b>The puzzle:</b> we fit y ≈ w·x with squared error, so E(w) is a parabola. With η = 0.05 gradient descent settles. Now multiply every input by 4 (same data, different scale) and keep η = 0.05. Switch between the two and replay the steps. Why does one converge and the other blow up?
       </>
     );
     stage = curve;
@@ -190,19 +192,19 @@ export default function StepLesson({ initialScreen }) {
           <Readout rows={[["learning rate η", "0.05 (fixed)"]]} />
           {rList}
         </Panel>
-        <Note>Both curves are the same deliveries priced the same way. Look at the width of the two bowls, not only the numbers.</Note>
+        <Note>Both curves come from the same data. Compare how wide the two bowls are.</Note>
       </>
     );
   } else if (screen === 1) {
     question = (
       <>
-        Now you control η. Use km first. Find the η that lands on the best rate in exactly one step. Then raise η until the walker starts to zig-zag, and again until it explodes. How are those three values related? Then switch to blocks and find them again.
+        Now you set η. With inputs x, find three values: the η that reaches w* in exactly one step, the η where the steps start to zig-zag around w*, and the η where they blow up. How are the three related? Then switch to 4x and find them again.
       </>
     );
     stage = (
       <>
         {curve}
-        <Trace series={[{ vals: errs, color: THEME.highlight, label: "r_k − best r" }]} n={8} yr={[-2, 2]} zero label="distance from the best rate after each step" />
+        <Trace series={[{ vals: errs, color: THEME.highlight, label: "w_k − w*" }]} n={8} yr={[-2, 2]} zero label="error w_k − w* after each step" />
       </>
     );
     side = (
@@ -213,12 +215,12 @@ export default function StepLesson({ initialScreen }) {
           <Slider id="l1-shown2" label="steps shown" value={shown} min={0} max={8} stepSize={1} onChange={setShown} display={shown + " of 8"} />
           <Readout
             rows={[
-              ["(r₁ − r*) / (r₀ − r*)", fmt(ratio, 3), Math.abs(ratio) > 1 ? THEME.warn : THEME.text],
-              ["(r₂ − r*) / (r₁ − r*)", pts.length > 2 ? fmt((pts[2] - rStar) / (pts[1] - rStar), 3) : "—"],
+              ["(w₁ − w*) / (w₀ − w*)", fmt(ratio, 3), Math.abs(ratio) > 1 ? THEME.warn : THEME.text],
+              ["(w₂ − w*) / (w₁ − w*)", pts.length > 2 ? fmt((pts[2] - rStar) / (pts[1] - rStar), 3) : "—"],
             ]}
           />
         </Panel>
-        <Note>Each step multiplies the distance to the best rate by the same factor. When is that factor 0? When is it negative? When is it below −1?</Note>
+        <Note>Each step multiplies the error w − w* by the same factor. When is that factor 0 (one step)? Negative (zig-zag)? Below −1 (blow-up)?</Note>
       </>
     );
   } else if (screen === 2) {
@@ -226,12 +228,12 @@ export default function StepLesson({ initialScreen }) {
     const T = (r) => f(pts[0]) + slopeOf(f, pts[0]) * (r - pts[0]) + 0.5 * a * (r - pts[0]) * (r - pts[0]);
     question = (
       <>
-        Name it. A parabola is fully described by its slope and its curvature E'' at your current point. Jump to its bottom and you get Newton's step. Your "one-step η" was 1/E''. Drag η and check that the three regimes sit at η_opt and 2·η_opt.
+        <b>What you found:</b> on a quadratic, the best step size is set by the curvature E'', not by the data size or the gradient. η_opt = 1/E'' reaches the minimum in one step. Below it you creep in; between η_opt and 2η_opt you zig-zag but still converge; above 2η_opt you diverge (slides 13–15). Drag η and check the three zones.
       </>
     );
     stage = (
       <>
-        <Curve1D f={f} xr={XR} yr={[0, 9]} pts={vis} xl={"rate r (" + UNITS[unit].per + ")"} label="E(r) and its Taylor parabola at r₀ (dashed: exact here, E is a parabola)" curves={[{ fn: T, color: THEME.text, dash: "5 4", width: 1.3 }]} />
+        <Curve1D f={f} xr={XR} yr={[0, 9]} pts={vis} xl="weight w" label="E(w) and its Taylor parabola at w₀ (dashed; exact here because E is a parabola)" curves={[{ fn: T, color: THEME.text, dash: "5 4", width: 1.3 }]} />
         <EtaBar eta={eta} etaOpt={etaOpt} max={3 * etaOpt} />
       </>
     );
@@ -241,30 +243,30 @@ export default function StepLesson({ initialScreen }) {
           {unitPills}
           <Slider id="l1-eta3" label="learning rate η" value={eta} min={0.001} max={3 * etaOpt} stepSize={0.0005} onChange={setEta} display={fmt(eta, 4)} />
           <Eq size={13}>
-            E(r) = E(r₀) + E'(r₀)(r − r₀) + ½E''(r − r₀)²
+            E(w) = E(w₀) + E'(w₀)(w − w₀) + ½E''(w − w₀)²
             <br />
-            r_min = r₀ − E'(r₀) / E''
+            w_min = w₀ − E'(w₀) / E''
             <br />
-            E'' = mean(distance²) = <b style={{ color: THEME.highlight }}>{fmt(a, 2)}</b>
+            E'' = mean(x²) = <b style={{ color: THEME.highlight }}>{fmt(a, 2)}</b>
             <br />
             η_opt = 1 / E'' = <b style={{ color: THEME.highlight }}>{fmt(etaOpt, 4)}</b>
             <br />
-            r_k+1 − r* = (1 − η/η_opt)(r_k − r*) = {fmt(1 - eta / etaOpt, 3)} × (r_k − r*)
+            w_k+1 − w* = (1 − η/η_opt)(w_k − w*) = {fmt(1 - eta / etaOpt, 3)} × (w_k − w*)
           </Eq>
-          <Note>Measuring in blocks multiplies every distance by 4, so E'' grows by 16 and η_opt shrinks by 16. With η = 0.05 the km run sat in the creeping zone. The blocks run was far past 2·η_opt (slides 14-16).</Note>
+          <Note>Scaling inputs by 4 multiplies E'' by 16, so η_opt shrinks by 16. With η = 0.05 the x run was in the creeping zone and the 4x run was far past 2·η_opt. Next: with two or more weights, each direction has its own curvature, so one η can't be best for all of them.</Note>
         </Panel>
       </>
     );
   } else {
     question = (
       <>
-        A partner city logs distances in miles and fits a robust loss, so big misses count less than squared. Nobody tells you E''. You can probe the slope at your current r and 0.1 further on. Starting from 1.00 €/mile, get within 0.01 of the best rate in at most 3 steps.
+        Real losses are not parabolas. Here E(w) is a log-cosh loss, so E'' changes with w and you aren't told its value. You can probe the slope E' at your current w and at w + 0.1. Starting from w = 1.00, get within 0.01 of the minimum in at most 3 steps.
       </>
     );
     stage = (
       <>
-        <Curve1D f={robustLoss} xr={[0, 4]} yr={[0, 8]} pts={path} xl="rate r (€/mile)" label="robust fee loss E(r), miles" vlines={solved ? [{ x: R_STAR_C, color: THEME.ok, label: "best r" }] : []} />
-        <Trace series={[{ vals: path.map((r) => r - R_STAR_C), color: THEME.highlight, label: "r_k − best r" }]} n={Math.max(3, stepsC)} yr={[-1.8, 1.8]} zero label="distance from the best rate" />
+        <Curve1D f={robustLoss} xr={[0, 4]} yr={[0, 8]} pts={path} xl="weight w" label="log-cosh loss E(w)" vlines={solved ? [{ x: R_STAR_C, color: THEME.ok, label: "w*" }] : []} />
+        <Trace series={[{ vals: path.map((r) => r - R_STAR_C), color: THEME.highlight, label: "w_k − w*" }]} n={Math.max(3, stepsC)} yr={[-1.8, 1.8]} zero label="error w_k − w*" />
       </>
     );
     side = (
@@ -284,21 +286,21 @@ export default function StepLesson({ initialScreen }) {
           )}
           <Slider id="l1-etac" label="learning rate η" value={etaC} min={0.005} max={0.8} stepSize={0.001} onChange={setEtaC} display={fmt(etaC, 3)} />
           <Btn onClick={stepC} strong disabled={stepsC >= 6}>
-            take one step: r ← r − η·E'(r)
+            take one step: w ← w − η·E'(w)
           </Btn>
           <div style={{ marginTop: 8 }}>
             <Readout
               rows={[
-                ["current r", fmt(rc, 4) + " €/mile"],
-                ["slope E'(r)", fmt(slopeOf(robustLoss, rc), 4)],
+                ["current w", fmt(rc, 4)],
+                ["slope E'(w)", fmt(slopeOf(robustLoss, rc), 4)],
               ]}
             />
             <Goal met={stepsC <= 3}>steps used: {stepsC} / 3</Goal>
-            <Goal met={solved}>slope flat enough that r is within 0.01 of the best rate</Goal>
+            <Goal met={solved}>w within 0.01 of the minimum w*</Goal>
           </div>
           <Hint
             hints={[
-              "The two probes tell you how fast the slope changes per €/mile. That rate of change is the curvature E''.",
+              "The two probes tell you how fast the slope changes as w moves. That rate of change is the curvature E''.",
               "Set η = 1/E'' with E'' ≈ (difference of the two slopes) / 0.1. The curve is not a parabola, so probe again after each step and update η.",
             ]}
           />

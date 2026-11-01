@@ -5,18 +5,18 @@
     "Optimization II.pdf"
   ],
   "sub": "Deep Learning · Training Neural Networks: Optimization II · six hands-on lessons",
-  "stamp": "Sheet: fitting delivery fees from the order log<br>Maps: loss over rate &amp; fee · <b>brighter = lower loss</b> · + = best fit",
-  "anchor": "fitting delivery fees from an order log",
+  "stamp": "Maps: loss over the two weights · <b>brighter = lower loss</b> · + = best fit",
+  "anchor": "fitting a line to a dataset (no story)",
   "navWidth": 190,
   "built": "2026-10-30",
   "artifact": "https://claude.ai/artifact/1FqhhWBXCdTiWsfSnz8VUe",
   "deckDividers": {},
-  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Optimization Lab for part I. Source deck: M. Soleymani, \"Training Neural Networks: Optimization\" (Optimization II), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). Orders, fees and the networks in lessons 4–5 are made-up teaching models: lessons 3 and 5 plot the exact expected SGD loss, the others run real SGD with a fixed random seed.",
+  "footer": "Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Optimization Lab for part I. Source deck: M. Soleymani, \"Training Neural Networks: Optimization\" (Optimization II), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The datasets and the networks in lessons 4–5 are made-up teaching models: lessons 3 and 5 plot the exact expected SGD loss, the others run real SGD with a fixed random seed.",
   "lessons": [
     {
       "id": "sgd",
       "n": 1,
-      "title": "One order at a time",
+      "title": "One sample at a time",
       "sub": "batch vs SGD · order of samples",
       "file": "l1-sgd.jsx",
       "slides": "3–19"
@@ -32,7 +32,7 @@
     {
       "id": "batch",
       "n": 3,
-      "title": "How many orders per update?",
+      "title": "How many samples per update?",
       "sub": "var/b · GPU width · η ∝ b",
       "file": "l3-batch.jsx",
       "slides": "21–48, 65"

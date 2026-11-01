@@ -5,7 +5,7 @@ import { THEME, MONO } from "./common";
 // Aha: the steepest direction sets the speed limit (eta < 2/lambda_max) and the flattest direction then crawls.
 // How slow you are is set by the ratio lambda_max / lambda_min, the condition number.
 
-// fee = w1 * distance(km) + w2 * weight(kg). Loss curvature: mean distance^2 = 4, mean weight^2 = 0.25.
+// two-weight quadratic loss, curvature 4 along w1 and 0.25 along w2 (e.g. y_hat = w1*x1 + w2*x2 with mean x1^2 = 4, mean x2^2 = 0.25).
 const W_STAR = [1.5, 3.0];
 const START = [-1.0, 5.5];
 const L1 = 4;
@@ -15,8 +15,8 @@ const A_DIAG = [
   [0, L2],
 ];
 const A_TILT = rotA(L1, L2, -35);
-const SURF_DIAG = { f: quad(A_DIAG, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁ €/km", yl: "w₂ €/kg" };
-const SURF_TILT = { f: quad(A_TILT, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁ €/km", yl: "w₂ €/kg" };
+const SURF_DIAG = { f: quad(A_DIAG, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁", yl: "w₂" };
+const SURF_TILT = { f: quad(A_TILT, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁", yl: "w₂" };
 const N = 40;
 const TOL = 0.05;
 
@@ -112,9 +112,9 @@ export default function ValleyLesson({ initialScreen }) {
   const onStart = useCallback((x, y) => setStart([x, y]), []);
   const kappa = L1 / L2;
 
-  // challenge: weight measured in units of (1000/s) g, so the feature is s times bigger
+  // challenge: input x2 multiplied by s, so the curvature along w2 grows by s^2
   const lam2 = L2 * s * s;
-  const surfC = useMemo(() => ({ f: quad(A_DIAG.map((r, i) => r.map((v, j) => (i === 1 && j === 1 ? lam2 : v))), [W_STAR[0], W_STAR[1] / s]), xr: [-1.5, 4.5], yr: [W_STAR[1] / s - 3, W_STAR[1] / s + 3], xl: "w₁ €/km", yl: "w₂ € per weight unit" }), [s, lam2]);
+  const surfC = useMemo(() => ({ f: quad(A_DIAG.map((r, i) => r.map((v, j) => (i === 1 && j === 1 ? lam2 : v))), [W_STAR[0], W_STAR[1] / s]), xr: [-1.5, 4.5], yr: [W_STAR[1] / s - 3, W_STAR[1] / s + 3], xl: "w₁", yl: "w₂ (for input s·x₂)" }), [s, lam2]);
   const runC = useMemo(() => runOpt(surfC.f, [START[0], START[1] / s], { kind: "gd", eta: etaC }, nC, 60), [surfC, s, etaC, nC]);
   const endC = runC.pts[runC.pts.length - 1];
   const perKg = endC[1] * s;
@@ -123,13 +123,13 @@ export default function ValleyLesson({ initialScreen }) {
   const traces = (
     <Trace
       series={[
-        { vals: w1s.map((v) => v - W_STAR[0]), color: THEME.highlight, label: "w₁ error (€/km)" },
-        { vals: w2s.map((v) => v - W_STAR[1]), color: THEME.text, dash: "5 3", label: "w₂ error (€/kg)" },
+        { vals: w1s.map((v) => v - W_STAR[0]), color: THEME.highlight, label: "w₁ − w₁*" },
+        { vals: w2s.map((v) => v - W_STAR[1]), color: THEME.text, dash: "5 3", label: "w₂ − w₂*" },
       ]}
       n={N}
       yr={[-3, 3]}
       zero
-      label="error in each rate after each step"
+      label="error in each weight after each step"
     />
   );
   const map = (
@@ -140,14 +140,14 @@ export default function ValleyLesson({ initialScreen }) {
       onHandle={onStart}
       target={W_STAR}
       overlay={screen >= 1 ? (useTilt ? OVER_TILT : OVER_DIAG) : null}
-      ariaLabel="Fee loss over the two rates with the gradient-descent path"
+      ariaLabel="Loss over the two weights with the gradient-descent path"
     />
   );
-  const etaSlider = <Slider id={"l2-eta" + screen} label="learning rate η (same for both rates)" value={eta} min={0.005} max={0.6} stepSize={0.005} onChange={setEta} display={fmt(eta, 3)} />;
+  const etaSlider = <Slider id={"l2-eta" + screen} label="learning rate η (same for both weights)" value={eta} min={0.005} max={0.6} stepSize={0.005} onChange={setEta} display={fmt(eta, 3)} />;
   const settle = (
     <>
-      <Goal met={k1 >= 0}>€/km rate settled within 0.05: {k1 >= 0 ? "step " + k1 : run.diverged ? "diverged" : "not in " + N}</Goal>
-      <Goal met={k2 >= 0}>€/kg rate settled within 0.05: {k2 >= 0 ? "step " + k2 : run.diverged ? "diverged" : "not in " + N}</Goal>
+      <Goal met={k1 >= 0}>w₁ settled within 0.05: {k1 >= 0 ? "step " + k1 : run.diverged ? "diverged" : "not in " + N}</Goal>
+      <Goal met={k2 >= 0}>w₂ settled within 0.05: {k2 >= 0 ? "step " + k2 : run.diverged ? "diverged" : "not in " + N}</Goal>
     </>
   );
 
@@ -155,7 +155,9 @@ export default function ValleyLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        Now the fee has two parts: a rate per km and a rate per kg. Gradient descent fits both, with one learning rate. The cross marks the best pair. Find the η that gets both rates right in the fewest steps. Why can't you make both settle quickly?
+        <b>Where we are:</b> lesson 1 showed that on one weight the best η is 1/E'', set by the curvature. Real networks have many weights, and the loss curves differently in each direction (slides 17–24). Gradient descent still uses <i>one</i> η for all of them. What does that cost?
+        <br />
+        <b>The puzzle:</b> the loss below has two weights. It curves 16× more sharply along w₁ than along w₂. The cross marks the minimum. Find the η that gets both weights within 0.05 in the fewest steps. Why can't both settle quickly?
       </>
     );
     stage = (
@@ -170,13 +172,13 @@ export default function ValleyLesson({ initialScreen }) {
           {etaSlider}
           {settle}
         </Panel>
-        <Note>Drag the start point too. Watch which rate is still far off when the other has long settled.</Note>
+        <Note>You can drag the start point. Watch which weight is still far off after the other has settled.</Note>
       </>
     );
   } else if (screen === 1) {
     question = (
       <>
-        Each axis of the bowl gets its own shrink factor per step. Push η up until one bar passes 1. Which axis hits the limit first? While you sit just under that limit, what is the other axis doing? Then tilt the bowl: heavier parcels tend to travel farther, so the two features move together.
+        <b>Claim to test:</b> along each axis of the bowl, gradient descent is the 1-D walk from lesson 1. Each step multiplies that axis's error by |1 − ηλ|, where λ is the curvature along it. The bars show this factor. Push η up until one bar passes 1. Which axis hits the limit first? Just under that limit, how fast is the other axis shrinking? Then turn on the tilt (the two inputs are correlated) and see if the same holds along the rotated axes.
       </>
     );
     stage = (
@@ -189,17 +191,17 @@ export default function ValleyLesson({ initialScreen }) {
       <>
         <Panel>
           {etaSlider}
-          <Toggle label="heavy parcels go farther (tilted bowl)" value={tilt} onChange={setTilt} />
+          <Toggle label="correlated inputs (tilted bowl)" value={tilt} onChange={setTilt} />
           {settle}
         </Panel>
-        <Note>With the tilt on, a step along w₁ also changes the slope along w₂. Do the shrink factors along the dotted axes change?</Note>
+        <Note>With the tilt on, the steep and flat axes no longer line up with w₁ and w₂. The factors along the dotted axes stay the same, so the problem is the same, just rotated.</Note>
       </>
     );
   } else if (screen === 2) {
     const best = 2 / (L1 + L2);
     question = (
       <>
-        Name it. Along each axis of the bowl, gradient descent is the 1-D walk from lesson 1 with curvature λᵢ, an eigenvalue of A. One η has to suit all of them at once. Set η to the "best compromise" value below and count the steps.
+        <b>What you found:</b> the steepest direction sets the speed limit, η &lt; 2/λ_max. Under that limit the flattest direction can only crawl. How slow you are depends on the ratio κ = λ_max/λ_min, called the condition number. The λᵢ are the eigenvalues of the Hessian A. Set η to the best compromise below and count the steps.
       </>
     );
     stage = (
@@ -226,44 +228,44 @@ export default function ValleyLesson({ initialScreen }) {
             <br />
             then both shrink by (κ−1)/(κ+1) = {fmt((kappa - 1) / (kappa + 1), 3)}
           </Eq>
-          <Note>Bigger κ means a longer, narrower valley and more steps. The gradient is perpendicular to the contours, so on a stretched bowl it points across the valley, not toward the cross (slides 19-23).</Note>
+          <Note>Bigger κ means a longer, narrower valley and more steps. The gradient is perpendicular to the contours, so on a stretched bowl it points across the valley instead of toward the minimum (slides 19–23).</Note>
         </Panel>
       </>
     );
   } else {
     question = (
       <>
-        You can't change the deliveries, but you can choose the unit the weight is logged in. Pick a weight unit and an η so that both rates are within 0.05 of the best (in €/km and €/kg) after at most {nC} steps. Go for {nC === 1 ? "one step" : "fewer steps"} if you can.
+        You can't change the data, but you can rescale an input: multiply x₂ by s. That changes the curvature along w₂ to 0.25·s². Pick s and η so that both weights are within 0.05 of the minimum after at most {nC} steps (w₂ is reported in the original scale). Go for {nC === 1 ? "one step" : "fewer steps"} if you can.
       </>
     );
     stage = (
       <>
-        <LossMap surf={surfC} paths={[{ pts: runC.pts, color: THEME.highlight, label: runC.diverged ? "diverged" : "after " + nC }]} target={[W_STAR[0], W_STAR[1] / s]} ariaLabel="Loss map in the chosen weight unit" />
-        <FactorBars eta={etaC} lams={[L1, lam2]} labels={["distance axis", "weight axis"]} />
+        <LossMap surf={surfC} paths={[{ pts: runC.pts, color: THEME.highlight, label: runC.diverged ? "diverged" : "after " + nC }]} target={[W_STAR[0], W_STAR[1] / s]} ariaLabel="Loss map with x₂ scaled by s" />
+        <FactorBars eta={etaC} lams={[L1, lam2]} labels={["w₁ axis", "w₂ axis"]} />
       </>
     );
     side = (
       <>
         <Panel edge={okC ? THEME.ok : THEME.grid}>
-          <Slider id="l2-s" label="weight unit" value={s} min={1} max={8} stepSize={0.01} onChange={setS} display={"1 unit = " + fmt(1000 / s, 0) + " g"} />
+          <Slider id="l2-s" label="input scale s (x₂ → s·x₂)" value={s} min={1} max={8} stepSize={0.01} onChange={setS} display={"s = " + fmt(s, 2)} />
           <Slider id="l2-etac" label="learning rate η" value={etaC} min={0.01} max={0.6} stepSize={0.001} onChange={setEtaC} display={fmt(etaC, 3)} />
           <Slider id="l2-nc" label="step budget" value={nC} min={1} max={5} stepSize={1} onChange={setNC} display={nC + " steps"} />
           <Readout
             rows={[
-              ["€/km after the steps", fmt(endC[0], 3)],
-              ["€/kg after the steps", fmt(perKg, 3)],
-              ["curvature along weight", fmt(lam2, 2)],
+              ["w₁ after the steps", fmt(endC[0], 3)],
+              ["w₂ after the steps (original scale)", fmt(perKg, 3)],
+              ["curvature along w₂", fmt(lam2, 2)],
             ]}
           />
-          <Goal met={okC}>both rates within 0.05 of the best</Goal>
+          <Goal met={okC}>both weights within 0.05 of the minimum</Goal>
           <Hint
             hints={[
-              "Watch the shape of the bowl as you change the unit. Which shape lets one η suit both directions?",
-              "Weight curvature is 0.25·(units per kg)². Make it equal to the distance curvature 4. Then lesson 1 says which η lands in one step.",
+              "Watch the shape of the bowl as you change s. Which shape lets one η suit both directions?",
+              "The curvature along w₂ is 0.25·s². Make it equal to the curvature along w₁, which is 4. Then lesson 1 tells you which η lands in one step.",
             ]}
           />
         </Panel>
-        <Note>Changing units is a rescaling of one axis. It fixes an axis-aligned bowl. A tilted bowl needs a rotation as well, which is the next lesson.</Note>
+        <Note>Rescaling an input stretches one axis. That makes κ = 1 for an axis-aligned bowl. A tilted bowl needs a rotation as well. Next lesson: do both at once with the Hessian (Newton's method).</Note>
       </>
     );
   }

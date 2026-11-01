@@ -90,7 +90,9 @@ export default function SchedLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        A real network's loss is rugged. This is the loss along one weight of the delivery-time model: a wide valley covered in small dips, with the deepest dip at w = 6. Training starts at w = 0.5 and runs 80 steps. Is there any fixed η that ends up settled in the deepest dip?
+        <b>Where we are:</b> lessons 1–3 assumed a smooth bowl, and Newton turned out too costly and unstable for real networks. The deck's second issue is the learning rate itself (slides 48–54): real losses are rugged, not bowls. Is any single fixed η right for the whole of training?
+        <br />
+        <b>The puzzle:</b> this is a loss along one weight: a wide valley covered in small dips, with the deepest dip at w = 6. Training starts at w = 0.5 and runs 80 steps. Is there a fixed η that ends up settled in the deepest dip?
       </>
     );
     stage = (
@@ -146,7 +148,7 @@ export default function SchedLesson({ initialScreen }) {
     const pAll = Math.pow(0.5, dims);
     question = (
       <>
-        Name it. A dip with curvature c has η_opt = 1/c. Each dip here curves by about {fmt(RIPPLE_CURV, 1)}, so it can hold the walker only once η &lt; 2/c ≈ {fmt(etaHold, 2)}. The wide valley curves by just 0.1, so it stays stable up to η = 20. A big η sees the valley and ignores the dips. A shrinking η lets one dip catch you near the bottom.
+        Name it. A dip with curvature c has η_opt = 1/c. Each dip here curves by about {fmt(RIPPLE_CURV, 1)}, so it can hold the walker only once η &lt; 2/c ≈ {fmt(etaHold, 2)}. The wide valley curves by just 0.1, so it stays stable up to η = 20. A big η sees the valley and ignores the dips. A shrinking η lets one dip catch you near the bottom. That is the deck's "decaying learning rate" (slides 50–51).
       </>
     );
     stage = (
@@ -186,14 +188,14 @@ export default function SchedLesson({ initialScreen }) {
           <Slider id="l4-dims" label="number of weights N" value={dims} min={1} max={60} stepSize={1} onChange={setDims} display={dims} />
           <Note>A flat point is a minimum only if the loss curves up in all N directions. If each direction were a coin flip, the chance would be</Note>
           <Readout rows={[["P(all N curve up) = 0.5^N", pAll < 1e-4 ? pAll.toExponential(1) : fmt(pAll, 4)]]} />
-          <Note>So in large networks most flat points are saddles. Most local minima that do exist have loss close to the global one.</Note>
+          <Note>So in large networks most flat points are saddles. Most local minima that do exist have loss close to the global one. Next: even on a smooth valley, one η still zig-zags across the steep direction. Momentum averages the zig-zags away.</Note>
         </Panel>
       </>
     );
   } else {
     question = (
       <>
-        A second weight, a new landscape: dips are tighter and the deepest one sits at w = 3.5. Training starts at w = 9. Design a schedule that ends settled in that dip after 80 steps.
+        A different rugged loss: the dips are tighter and the deepest one sits at w = 3.5. Training starts at w = 9. Design a schedule that ends settled in that dip after 80 steps.
       </>
     );
     stage = (

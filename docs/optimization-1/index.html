@@ -57,12 +57,12 @@
       <h1>Optimization Lab</h1>
       <div class="sub">Deep Learning · Training Neural Networks: Optimization I · six hands-on lessons</div>
     </div>
-    <div class="stamp">Sheet: fitting delivery fees<br>Maps: loss over two rates · <b>brighter = lower loss</b> · + = best</div>
+    <div class="stamp">Maps: loss over two weights · <b>brighter = lower loss</b> · + = minimum</div>
   </header>
   <nav id="nav"></nav>
   <main id="main"></main>
   <footer>
-    Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. Source deck: M. Soleymani, "Training Neural Networks: Optimization" (Optimization I), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The deliveries, fees and loss surfaces are made-up teaching data.
+    Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. Source deck: M. Soleymani, "Training Neural Networks: Optimization" (Optimization I), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The loss surfaces and datasets are made-up teaching examples.
     <br><a href="../">← all labs</a>
   </footer>
 </div>
@@ -1181,20 +1181,18 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
   // Aha: the right step size is set by how sharply the loss curves, not by the data or the gradient.
   // For a parabola, eta_opt = 1 / E'' lands in one step; past 2 eta_opt every step overshoots further.
 
-  // eight past deliveries: distance in km, fee in euro. Model: fee = r * distance.
+  // eight training points (x, y). Model: y_hat = w * x, squared-error loss. "4x" = the same data with every input scaled by 4.
   const DIST = [1.2, 1.9, 2.4, 3.0, 3.5, 4.1, 4.6, 5.3];
   const NOISE = [0.3, -0.2, 0.4, -0.3, 0.1, 0.5, -0.4, 0.2];
   const FEE = DIST.map((d, i) => 1.6 * d + NOISE[i]);
   const UNITS = {
     km: {
       s: 1,
-      name: "km",
-      per: "€/km"
+      name: "x"
     },
     blk: {
       s: 4,
-      name: "block (250 m)",
-      per: "€/block"
+      name: "4x"
     }
   };
   function curvature(u) {
@@ -1242,7 +1240,7 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
   const XR = [-0.6, 3.6];
   const R0 = 0.3;
 
-  // challenge: distances logged in miles, robust log-cosh loss (big misses count less than squared)
+  // challenge: inputs scaled by 1/1.609 and a log-cosh loss (not a parabola, so E'' changes with w)
   const MILES = DIST.map(d => d / 1.609);
   const FEE_C = DIST.map((d, i) => 1.6 * d + 2 * NOISE[i]);
   function robustLoss(r) {
@@ -1354,7 +1352,7 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
     }, []);
     const solved = Math.abs(rc - R_STAR_C) < 0.01 && stepsC <= 3;
     const unitPills = /*#__PURE__*/React.createElement(Pills, {
-      options: [["km", "distance in km"], ["blk", "distance in blocks"]],
+      options: [["km", "inputs x"], ["blk", "inputs 4x"]],
       value: unit,
       onPick: pickUnit
     });
@@ -1363,12 +1361,12 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
       xr: XR,
       yr: [0, 9],
       pts: vis,
-      xl: "rate r (" + UNITS[unit].per + ")",
-      label: "mean squared fee error E(r), distances in " + UNITS[unit].name,
+      xl: "weight w",
+      label: "loss E(w) = mean ½(y − w·" + UNITS[unit].name + ")²",
       vlines: screen >= 1 ? [{
         x: rStar,
         color: THEME.muted,
-        label: "best r"
+        label: "w*"
       }] : []
     });
     const rList = /*#__PURE__*/React.createElement("div", {
@@ -1384,14 +1382,14 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
         marginRight: 10,
         whiteSpace: "nowrap"
       }
-    }, "r", k, "=", fmt(r, 2))), diverged && /*#__PURE__*/React.createElement("div", {
+    }, "w", k, "=", fmt(r, 2))), diverged && /*#__PURE__*/React.createElement("div", {
       style: {
         color: THEME.warn
       }
-    }, "\u2715 the steps grow every time: diverging"));
+    }, "\u2715 each step lands farther from w*: diverging"));
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "The fee model is fee = r \xD7 distance, and gradient descent fits the rate r. Last month distances were logged in km and \u03B7 = 0.05 worked nicely. The new dispatch app logs distances in city blocks (4 blocks per km). It's the same deliveries and the same \u03B7. Switch units and replay the steps. Why does one setting settle and the other blow up?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " the deck starts its tour of convergence with the simplest case, gradient descent on a one-weight quadratic loss (slides 12\u201316). Before anything harder we need one answer: for a given loss, which learning rates \u03B7 converge, and which one is best?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " we fit y \u2248 w\xB7x with squared error, so E(w) is a parabola. With \u03B7 = 0.05 gradient descent settles. Now multiply every input by 4 (same data, different scale) and keep \u03B7 = 0.05. Switch between the two and replay the steps. Why does one converge and the other blow up?");
       stage = curve;
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, unitPills, /*#__PURE__*/React.createElement(Slider, {
         id: "l1-shown",
@@ -1404,19 +1402,19 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
         display: shown + " of 8"
       }), /*#__PURE__*/React.createElement(Readout, {
         rows: [["learning rate η", "0.05 (fixed)"]]
-      }), rList), /*#__PURE__*/React.createElement(Note, null, "Both curves are the same deliveries priced the same way. Look at the width of the two bowls, not only the numbers."));
+      }), rList), /*#__PURE__*/React.createElement(Note, null, "Both curves come from the same data. Compare how wide the two bowls are."));
     } else if (screen === 1) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Now you control \u03B7. Use km first. Find the \u03B7 that lands on the best rate in exactly one step. Then raise \u03B7 until the walker starts to zig-zag, and again until it explodes. How are those three values related? Then switch to blocks and find them again.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Now you set \u03B7. With inputs x, find three values: the \u03B7 that reaches w* in exactly one step, the \u03B7 where the steps start to zig-zag around w*, and the \u03B7 where they blow up. How are the three related? Then switch to 4x and find them again.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, curve, /*#__PURE__*/React.createElement(Trace, {
         series: [{
           vals: errs,
           color: THEME.highlight,
-          label: "r_k − best r"
+          label: "w_k − w*"
         }],
         n: 8,
         yr: [-2, 2],
         zero: true,
-        label: "distance from the best rate after each step"
+        label: "error w_k \u2212 w* after each step"
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, unitPills, /*#__PURE__*/React.createElement(Slider, {
         id: "l1-eta",
@@ -1437,19 +1435,19 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
         onChange: setShown,
         display: shown + " of 8"
       }), /*#__PURE__*/React.createElement(Readout, {
-        rows: [["(r₁ − r*) / (r₀ − r*)", fmt(ratio, 3), Math.abs(ratio) > 1 ? THEME.warn : THEME.text], ["(r₂ − r*) / (r₁ − r*)", pts.length > 2 ? fmt((pts[2] - rStar) / (pts[1] - rStar), 3) : "—"]]
-      })), /*#__PURE__*/React.createElement(Note, null, "Each step multiplies the distance to the best rate by the same factor. When is that factor 0? When is it negative? When is it below \u22121?"));
+        rows: [["(w₁ − w*) / (w₀ − w*)", fmt(ratio, 3), Math.abs(ratio) > 1 ? THEME.warn : THEME.text], ["(w₂ − w*) / (w₁ − w*)", pts.length > 2 ? fmt((pts[2] - rStar) / (pts[1] - rStar), 3) : "—"]]
+      })), /*#__PURE__*/React.createElement(Note, null, "Each step multiplies the error w \u2212 w* by the same factor. When is that factor 0 (one step)? Negative (zig-zag)? Below \u22121 (blow-up)?"));
     } else if (screen === 2) {
       const etaOpt = 1 / a;
       const T = r => f(pts[0]) + slopeOf(f, pts[0]) * (r - pts[0]) + 0.5 * a * (r - pts[0]) * (r - pts[0]);
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. A parabola is fully described by its slope and its curvature E'' at your current point. Jump to its bottom and you get Newton's step. Your \"one-step \u03B7\" was 1/E''. Drag \u03B7 and check that the three regimes sit at \u03B7_opt and 2\xB7\u03B7_opt.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "What you found:"), " on a quadratic, the best step size is set by the curvature E'', not by the data size or the gradient. \u03B7_opt = 1/E'' reaches the minimum in one step. Below it you creep in; between \u03B7_opt and 2\u03B7_opt you zig-zag but still converge; above 2\u03B7_opt you diverge (slides 13\u201315). Drag \u03B7 and check the three zones.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Curve1D, {
         f: f,
         xr: XR,
         yr: [0, 9],
         pts: vis,
-        xl: "rate r (" + UNITS[unit].per + ")",
-        label: "E(r) and its Taylor parabola at r\u2080 (dashed: exact here, E is a parabola)",
+        xl: "weight w",
+        label: "E(w) and its Taylor parabola at w\u2080 (dashed; exact here because E is a parabola)",
         curves: [{
           fn: T,
           color: THEME.text,
@@ -1472,7 +1470,7 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
         display: fmt(eta, 4)
       }), /*#__PURE__*/React.createElement(Eq, {
         size: 13
-      }, "E(r) = E(r\u2080) + E'(r\u2080)(r \u2212 r\u2080) + \xBDE''(r \u2212 r\u2080)\xB2", /*#__PURE__*/React.createElement("br", null), "r_min = r\u2080 \u2212 E'(r\u2080) / E''", /*#__PURE__*/React.createElement("br", null), "E'' = mean(distance\xB2) = ", /*#__PURE__*/React.createElement("b", {
+      }, "E(w) = E(w\u2080) + E'(w\u2080)(w \u2212 w\u2080) + \xBDE''(w \u2212 w\u2080)\xB2", /*#__PURE__*/React.createElement("br", null), "w_min = w\u2080 \u2212 E'(w\u2080) / E''", /*#__PURE__*/React.createElement("br", null), "E'' = mean(x\xB2) = ", /*#__PURE__*/React.createElement("b", {
         style: {
           color: THEME.highlight
         }
@@ -1480,31 +1478,31 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
         style: {
           color: THEME.highlight
         }
-      }, fmt(etaOpt, 4)), /*#__PURE__*/React.createElement("br", null), "r_k+1 \u2212 r* = (1 \u2212 \u03B7/\u03B7_opt)(r_k \u2212 r*) = ", fmt(1 - eta / etaOpt, 3), " \xD7 (r_k \u2212 r*)"), /*#__PURE__*/React.createElement(Note, null, "Measuring in blocks multiplies every distance by 4, so E'' grows by 16 and \u03B7_opt shrinks by 16. With \u03B7 = 0.05 the km run sat in the creeping zone. The blocks run was far past 2\xB7\u03B7_opt (slides 14-16).")));
+      }, fmt(etaOpt, 4)), /*#__PURE__*/React.createElement("br", null), "w_k+1 \u2212 w* = (1 \u2212 \u03B7/\u03B7_opt)(w_k \u2212 w*) = ", fmt(1 - eta / etaOpt, 3), " \xD7 (w_k \u2212 w*)"), /*#__PURE__*/React.createElement(Note, null, "Scaling inputs by 4 multiplies E'' by 16, so \u03B7_opt shrinks by 16. With \u03B7 = 0.05 the x run was in the creeping zone and the 4x run was far past 2\xB7\u03B7_opt. Next: with two or more weights, each direction has its own curvature, so one \u03B7 can't be best for all of them.")));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A partner city logs distances in miles and fits a robust loss, so big misses count less than squared. Nobody tells you E''. You can probe the slope at your current r and 0.1 further on. Starting from 1.00 \u20AC/mile, get within 0.01 of the best rate in at most 3 steps.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Real losses are not parabolas. Here E(w) is a log-cosh loss, so E'' changes with w and you aren't told its value. You can probe the slope E' at your current w and at w + 0.1. Starting from w = 1.00, get within 0.01 of the minimum in at most 3 steps.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Curve1D, {
         f: robustLoss,
         xr: [0, 4],
         yr: [0, 8],
         pts: path,
-        xl: "rate r (\u20AC/mile)",
-        label: "robust fee loss E(r), miles",
+        xl: "weight w",
+        label: "log-cosh loss E(w)",
         vlines: solved ? [{
           x: R_STAR_C,
           color: THEME.ok,
-          label: "best r"
+          label: "w*"
         }] : []
       }), /*#__PURE__*/React.createElement(Trace, {
         series: [{
           vals: path.map(r => r - R_STAR_C),
           color: THEME.highlight,
-          label: "r_k − best r"
+          label: "w_k − w*"
         }],
         n: Math.max(3, stepsC),
         yr: [-1.8, 1.8],
         zero: true,
-        label: "distance from the best rate"
+        label: "error w_k \u2212 w*"
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, {
         edge: solved ? THEME.ok : THEME.grid
@@ -1534,18 +1532,18 @@ window.__LESSON_SRC["step"] = function () { return (function (React) {
         onClick: stepC,
         strong: true,
         disabled: stepsC >= 6
-      }, "take one step: r \u2190 r \u2212 \u03B7\xB7E'(r)"), /*#__PURE__*/React.createElement("div", {
+      }, "take one step: w \u2190 w \u2212 \u03B7\xB7E'(w)"), /*#__PURE__*/React.createElement("div", {
         style: {
           marginTop: 8
         }
       }, /*#__PURE__*/React.createElement(Readout, {
-        rows: [["current r", fmt(rc, 4) + " €/mile"], ["slope E'(r)", fmt(slopeOf(robustLoss, rc), 4)]]
+        rows: [["current w", fmt(rc, 4)], ["slope E'(w)", fmt(slopeOf(robustLoss, rc), 4)]]
       }), /*#__PURE__*/React.createElement(Goal, {
         met: stepsC <= 3
       }, "steps used: ", stepsC, " / 3"), /*#__PURE__*/React.createElement(Goal, {
         met: solved
-      }, "slope flat enough that r is within 0.01 of the best rate")), /*#__PURE__*/React.createElement(Hint, {
-        hints: ["The two probes tell you how fast the slope changes per €/mile. That rate of change is the curvature E''.", "Set η = 1/E'' with E'' ≈ (difference of the two slopes) / 0.1. The curve is not a parabola, so probe again after each step and update η."]
+      }, "w within 0.01 of the minimum w*")), /*#__PURE__*/React.createElement(Hint, {
+        hints: ["The two probes tell you how fast the slope changes as w moves. That rate of change is the curvature E''.", "Set η = 1/E'' with E'' ≈ (difference of the two slopes) / 0.1. The curve is not a parabola, so probe again after each step and update η."]
       })));
     }
     return /*#__PURE__*/React.createElement(LessonFrame, {
@@ -2671,7 +2669,7 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
   // Aha: the steepest direction sets the speed limit (eta < 2/lambda_max) and the flattest direction then crawls.
   // How slow you are is set by the ratio lambda_max / lambda_min, the condition number.
 
-  // fee = w1 * distance(km) + w2 * weight(kg). Loss curvature: mean distance^2 = 4, mean weight^2 = 0.25.
+  // two-weight quadratic loss, curvature 4 along w1 and 0.25 along w2 (e.g. y_hat = w1*x1 + w2*x2 with mean x1^2 = 4, mean x2^2 = 0.25).
   const W_STAR = [1.5, 3.0];
   const START = [-1.0, 5.5];
   const L1 = 4;
@@ -2682,15 +2680,15 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
     f: quad(A_DIAG, W_STAR),
     xr: [-1.5, 4.5],
     yr: [0, 6],
-    xl: "w₁ €/km",
-    yl: "w₂ €/kg"
+    xl: "w₁",
+    yl: "w₂"
   };
   const SURF_TILT = {
     f: quad(A_TILT, W_STAR),
     xr: [-1.5, 4.5],
     yr: [0, 6],
-    xl: "w₁ €/km",
-    yl: "w₂ €/kg"
+    xl: "w₁",
+    yl: "w₂"
   };
   const N = 40;
   const TOL = 0.05;
@@ -2827,14 +2825,14 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
     const onStart = useCallback((x, y) => setStart([x, y]), []);
     const kappa = L1 / L2;
 
-    // challenge: weight measured in units of (1000/s) g, so the feature is s times bigger
+    // challenge: input x2 multiplied by s, so the curvature along w2 grows by s^2
     const lam2 = L2 * s * s;
     const surfC = useMemo(() => ({
       f: quad(A_DIAG.map((r, i) => r.map((v, j) => i === 1 && j === 1 ? lam2 : v)), [W_STAR[0], W_STAR[1] / s]),
       xr: [-1.5, 4.5],
       yr: [W_STAR[1] / s - 3, W_STAR[1] / s + 3],
-      xl: "w₁ €/km",
-      yl: "w₂ € per weight unit"
+      xl: "w₁",
+      yl: "w₂ (for input s·x₂)"
     }), [s, lam2]);
     const runC = useMemo(() => runOpt(surfC.f, [START[0], START[1] / s], {
       kind: "gd",
@@ -2847,17 +2845,17 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
       series: [{
         vals: w1s.map(v => v - W_STAR[0]),
         color: THEME.highlight,
-        label: "w₁ error (€/km)"
+        label: "w₁ − w₁*"
       }, {
         vals: w2s.map(v => v - W_STAR[1]),
         color: THEME.text,
         dash: "5 3",
-        label: "w₂ error (€/kg)"
+        label: "w₂ − w₂*"
       }],
       n: N,
       yr: [-3, 3],
       zero: true,
-      label: "error in each rate after each step"
+      label: "error in each weight after each step"
     });
     const map = /*#__PURE__*/React.createElement(LossMap, {
       surf: surf,
@@ -2870,11 +2868,11 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
       onHandle: onStart,
       target: W_STAR,
       overlay: screen >= 1 ? useTilt ? OVER_TILT : OVER_DIAG : null,
-      ariaLabel: "Fee loss over the two rates with the gradient-descent path"
+      ariaLabel: "Loss over the two weights with the gradient-descent path"
     });
     const etaSlider = /*#__PURE__*/React.createElement(Slider, {
       id: "l2-eta" + screen,
-      label: "learning rate \u03B7 (same for both rates)",
+      label: "learning rate \u03B7 (same for both weights)",
       value: eta,
       min: 0.005,
       max: 0.6,
@@ -2884,29 +2882,29 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
     });
     const settle = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Goal, {
       met: k1 >= 0
-    }, "\u20AC/km rate settled within 0.05: ", k1 >= 0 ? "step " + k1 : run.diverged ? "diverged" : "not in " + N), /*#__PURE__*/React.createElement(Goal, {
+    }, "w\u2081 settled within 0.05: ", k1 >= 0 ? "step " + k1 : run.diverged ? "diverged" : "not in " + N), /*#__PURE__*/React.createElement(Goal, {
       met: k2 >= 0
-    }, "\u20AC/kg rate settled within 0.05: ", k2 >= 0 ? "step " + k2 : run.diverged ? "diverged" : "not in " + N));
+    }, "w\u2082 settled within 0.05: ", k2 >= 0 ? "step " + k2 : run.diverged ? "diverged" : "not in " + N));
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Now the fee has two parts: a rate per km and a rate per kg. Gradient descent fits both, with one learning rate. The cross marks the best pair. Find the \u03B7 that gets both rates right in the fewest steps. Why can't you make both settle quickly?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " lesson 1 showed that on one weight the best \u03B7 is 1/E'', set by the curvature. Real networks have many weights, and the loss curves differently in each direction (slides 17\u201324). Gradient descent still uses ", /*#__PURE__*/React.createElement("i", null, "one"), " \u03B7 for all of them. What does that cost?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " the loss below has two weights. It curves 16\xD7 more sharply along w\u2081 than along w\u2082. The cross marks the minimum. Find the \u03B7 that gets both weights within 0.05 in the fewest steps. Why can't both settle quickly?");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, map, traces);
-      side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, etaSlider, settle), /*#__PURE__*/React.createElement(Note, null, "Drag the start point too. Watch which rate is still far off when the other has long settled."));
+      side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, etaSlider, settle), /*#__PURE__*/React.createElement(Note, null, "You can drag the start point. Watch which weight is still far off after the other has settled."));
     } else if (screen === 1) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Each axis of the bowl gets its own shrink factor per step. Push \u03B7 up until one bar passes 1. Which axis hits the limit first? While you sit just under that limit, what is the other axis doing? Then tilt the bowl: heavier parcels tend to travel farther, so the two features move together.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Claim to test:"), " along each axis of the bowl, gradient descent is the 1-D walk from lesson 1. Each step multiplies that axis's error by |1 \u2212 \u03B7\u03BB|, where \u03BB is the curvature along it. The bars show this factor. Push \u03B7 up until one bar passes 1. Which axis hits the limit first? Just under that limit, how fast is the other axis shrinking? Then turn on the tilt (the two inputs are correlated) and see if the same holds along the rotated axes.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, map, /*#__PURE__*/React.createElement(FactorBars, {
         eta: eta,
         lams: [L1, L2],
         labels: ["steep axis", "flat axis"]
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, etaSlider, /*#__PURE__*/React.createElement(Toggle, {
-        label: "heavy parcels go farther (tilted bowl)",
+        label: "correlated inputs (tilted bowl)",
         value: tilt,
         onChange: setTilt
-      }), settle), /*#__PURE__*/React.createElement(Note, null, "With the tilt on, a step along w\u2081 also changes the slope along w\u2082. Do the shrink factors along the dotted axes change?"));
+      }), settle), /*#__PURE__*/React.createElement(Note, null, "With the tilt on, the steep and flat axes no longer line up with w\u2081 and w\u2082. The factors along the dotted axes stay the same, so the problem is the same, just rotated."));
     } else if (screen === 2) {
       const best = 2 / (L1 + L2);
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. Along each axis of the bowl, gradient descent is the 1-D walk from lesson 1 with curvature \u03BB\u1D62, an eigenvalue of A. One \u03B7 has to suit all of them at once. Set \u03B7 to the \"best compromise\" value below and count the steps.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "What you found:"), " the steepest direction sets the speed limit, \u03B7 < 2/\u03BB_max. Under that limit the flattest direction can only crawl. How slow you are depends on the ratio \u03BA = \u03BB_max/\u03BB_min, called the condition number. The \u03BB\u1D62 are the eigenvalues of the Hessian A. Set \u03B7 to the best compromise below and count the steps.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, map, /*#__PURE__*/React.createElement(FactorBars, {
         eta: eta,
         lams: [L1, L2],
@@ -2918,9 +2916,9 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
         onChange: setTilt
       }), /*#__PURE__*/React.createElement(Eq, {
         size: 12.5
-      }, "E = \xBD(w \u2212 w*)\u1D40A(w \u2212 w*), A = E\u039BE\u1D40", /*#__PURE__*/React.createElement("br", null), "per axis: error \u2190 (1 \u2212 \u03B7\u03BB\u1D62) \xB7 error", /*#__PURE__*/React.createElement("br", null), "no divergence: \u03B7 < 2/\u03BB_max = ", fmt(2 / L1, 3), /*#__PURE__*/React.createElement("br", null), "\u03BA = \u03BB_max/\u03BB_min = ", fmt(kappa, 0), /*#__PURE__*/React.createElement("br", null), "best single \u03B7 = 2/(\u03BB_max+\u03BB_min) = ", fmt(best, 3), /*#__PURE__*/React.createElement("br", null), "then both shrink by (\u03BA\u22121)/(\u03BA+1) = ", fmt((kappa - 1) / (kappa + 1), 3)), /*#__PURE__*/React.createElement(Note, null, "Bigger \u03BA means a longer, narrower valley and more steps. The gradient is perpendicular to the contours, so on a stretched bowl it points across the valley, not toward the cross (slides 19-23).")));
+      }, "E = \xBD(w \u2212 w*)\u1D40A(w \u2212 w*), A = E\u039BE\u1D40", /*#__PURE__*/React.createElement("br", null), "per axis: error \u2190 (1 \u2212 \u03B7\u03BB\u1D62) \xB7 error", /*#__PURE__*/React.createElement("br", null), "no divergence: \u03B7 < 2/\u03BB_max = ", fmt(2 / L1, 3), /*#__PURE__*/React.createElement("br", null), "\u03BA = \u03BB_max/\u03BB_min = ", fmt(kappa, 0), /*#__PURE__*/React.createElement("br", null), "best single \u03B7 = 2/(\u03BB_max+\u03BB_min) = ", fmt(best, 3), /*#__PURE__*/React.createElement("br", null), "then both shrink by (\u03BA\u22121)/(\u03BA+1) = ", fmt((kappa - 1) / (kappa + 1), 3)), /*#__PURE__*/React.createElement(Note, null, "Bigger \u03BA means a longer, narrower valley and more steps. The gradient is perpendicular to the contours, so on a stretched bowl it points across the valley instead of toward the minimum (slides 19\u201323).")));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "You can't change the deliveries, but you can choose the unit the weight is logged in. Pick a weight unit and an \u03B7 so that both rates are within 0.05 of the best (in \u20AC/km and \u20AC/kg) after at most ", nC, " steps. Go for ", nC === 1 ? "one step" : "fewer steps", " if you can.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "You can't change the data, but you can rescale an input: multiply x\u2082 by s. That changes the curvature along w\u2082 to 0.25\xB7s\xB2. Pick s and \u03B7 so that both weights are within 0.05 of the minimum after at most ", nC, " steps (w\u2082 is reported in the original scale). Go for ", nC === 1 ? "one step" : "fewer steps", " if you can.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LossMap, {
         surf: surfC,
         paths: [{
@@ -2929,23 +2927,23 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
           label: runC.diverged ? "diverged" : "after " + nC
         }],
         target: [W_STAR[0], W_STAR[1] / s],
-        ariaLabel: "Loss map in the chosen weight unit"
+        ariaLabel: "Loss map with x\u2082 scaled by s"
       }), /*#__PURE__*/React.createElement(FactorBars, {
         eta: etaC,
         lams: [L1, lam2],
-        labels: ["distance axis", "weight axis"]
+        labels: ["w₁ axis", "w₂ axis"]
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, {
         edge: okC ? THEME.ok : THEME.grid
       }, /*#__PURE__*/React.createElement(Slider, {
         id: "l2-s",
-        label: "weight unit",
+        label: "input scale s (x\u2082 \u2192 s\xB7x\u2082)",
         value: s,
         min: 1,
         max: 8,
         stepSize: 0.01,
         onChange: setS,
-        display: "1 unit = " + fmt(1000 / s, 0) + " g"
+        display: "s = " + fmt(s, 2)
       }), /*#__PURE__*/React.createElement(Slider, {
         id: "l2-etac",
         label: "learning rate \u03B7",
@@ -2965,12 +2963,12 @@ window.__LESSON_SRC["valley"] = function () { return (function (React) {
         onChange: setNC,
         display: nC + " steps"
       }), /*#__PURE__*/React.createElement(Readout, {
-        rows: [["€/km after the steps", fmt(endC[0], 3)], ["€/kg after the steps", fmt(perKg, 3)], ["curvature along weight", fmt(lam2, 2)]]
+        rows: [["w₁ after the steps", fmt(endC[0], 3)], ["w₂ after the steps (original scale)", fmt(perKg, 3)], ["curvature along w₂", fmt(lam2, 2)]]
       }), /*#__PURE__*/React.createElement(Goal, {
         met: okC
-      }, "both rates within 0.05 of the best"), /*#__PURE__*/React.createElement(Hint, {
-        hints: ["Watch the shape of the bowl as you change the unit. Which shape lets one η suit both directions?", "Weight curvature is 0.25·(units per kg)². Make it equal to the distance curvature 4. Then lesson 1 says which η lands in one step."]
-      })), /*#__PURE__*/React.createElement(Note, null, "Changing units is a rescaling of one axis. It fixes an axis-aligned bowl. A tilted bowl needs a rotation as well, which is the next lesson."));
+      }, "both weights within 0.05 of the minimum"), /*#__PURE__*/React.createElement(Hint, {
+        hints: ["Watch the shape of the bowl as you change s. Which shape lets one η suit both directions?", "The curvature along w₂ is 0.25·s². Make it equal to the curvature along w₁, which is 4. Then lesson 1 tells you which η lands in one step."]
+      })), /*#__PURE__*/React.createElement(Note, null, "Rescaling an input stretches one axis. That makes \u03BA = 1 for an axis-aligned bowl. A tilted bowl needs a rotation as well. Next lesson: do both at once with the Hessian (Newton's method)."));
     }
     return /*#__PURE__*/React.createElement(LessonFrame, {
       screen: screen,
@@ -4103,8 +4101,8 @@ window.__LESSON_SRC["newton"] = function () { return (function (React) {
     f: quad(A, W_STAR),
     xr: [-1.5, 4.5],
     yr: [0, 6],
-    xl: "w₁ €/km",
-    yl: "w₂ €/kg"
+    xl: "w₁",
+    yl: "w₂"
   };
   const START = [-0.6, 5.2];
 
@@ -4295,20 +4293,20 @@ window.__LESSON_SRC["newton"] = function () { return (function (React) {
     const okS = !runS.diverged && distMin < 0.05;
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Back to the tilted fee bowl. The red arrow is the downhill direction, and the dashed line goes to the best pair. Drag the point around. Where on the map does downhill point straight at the best pair? What do those places have in common?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " lesson 2 showed that one \u03B7 can't suit a bowl that curves differently in different directions. Rescaling inputs only fixes an axis-aligned bowl. The deck's fix is to scale ", /*#__PURE__*/React.createElement("i", null, "and rotate"), " the axes until the bowl is round (slides 23\u201330). That leads to Newton's method.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " this is the tilted bowl from lesson 2. The red arrow is \u2212\u2207E, the direction gradient descent moves. The dashed line goes to the minimum. Drag the point. Where does \u2212\u2207E point straight at the minimum? What do those places have in common?");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: BOWL,
         handle: probe,
         onHandle: onProbe,
         target: W_STAR,
         overlay: P => gradArrow(BOWL.f, probe, P, W_STAR),
-        ariaLabel: "Tilted fee bowl with the downhill arrow"
+        ariaLabel: "Tilted bowl with the negative gradient arrow"
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Readout, {
-        rows: [["angle between −gradient and the best pair", fmt(ang, 1) + "°", ang < 3 ? THEME.ok : THEME.text]]
+        rows: [["angle between −∇E and the direction to the minimum", fmt(ang, 1) + "°", ang < 3 ? THEME.ok : THEME.text]]
       }), /*#__PURE__*/React.createElement(Goal, {
         met: ang < 3
-      }, "downhill points at the best pair (under 3\xB0)")), /*#__PURE__*/React.createElement(Note, null, "The gradient is always perpendicular to the contour line through your point. On a stretched oval, that is rarely toward the centre."));
+      }, "\u2212\u2207E points at the minimum (under 3\xB0)")), /*#__PURE__*/React.createElement(Note, null, "The gradient is always perpendicular to the contour line through your point. On a stretched oval, that is rarely toward the centre."));
     } else if (screen === 1) {
       question = /*#__PURE__*/React.createElement(React.Fragment, null, "Stretch space. The right map is the same loss with the bowl's steep axis scaled by s\u2081 and its flat axis by s\u2082. Find s\u2081 and s\u2082 that make the contours round. Then run 12 plain gradient steps in the stretched space and map them back on the left. What \u03B7 lands in one step?");
       stage = /*#__PURE__*/React.createElement("div", {
@@ -4377,12 +4375,12 @@ window.__LESSON_SRC["newton"] = function () { return (function (React) {
         onChange: setEtaU,
         display: fmt(etaU, 2)
       }), /*#__PURE__*/React.createElement(Readout, {
-        rows: [["distance to best after 1 step", runU.diverged ? "diverged" : fmt(after1, 3)], ["distance after 12 steps", runU.diverged ? "diverged" : fmt(distEnd, 3)]]
+        rows: [["distance to minimum after 1 step", runU.diverged ? "diverged" : fmt(after1, 3)], ["distance after 12 steps", runU.diverged ? "diverged" : fmt(distEnd, 3)]]
       }), /*#__PURE__*/React.createElement(Goal, {
         met: !runU.diverged && after1 < 0.02
-      }, "one step lands on the best pair")), /*#__PURE__*/React.createElement(Note, null, "The bowl's curvatures are 4 along the steep axis and 0.25 along the flat one. What stretch turns both into the same curvature?"));
+      }, "one step lands on the minimum")), /*#__PURE__*/React.createElement(Note, null, "The bowl's curvatures are 4 along the steep axis and 0.25 along the flat one. What stretch turns both into the same curvature?"));
     } else if (screen === 2) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. Round contours came from s\u2081 = 2 = \u221A4 and s\u2082 = 0.5 = \u221A0.25, so S = A^\xBD. Gradient descent in the stretched space, mapped back, is w \u2190 w \u2212 \u03B7\xB7A\u207B\xB9\u2207E. For a general loss, A becomes the Hessian at your current point: that is Newton's method. Step through Newton on a curved, non-quadratic valley.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "What you found:"), " the contours became round at s\u2081 = 2 = \u221A4 and s\u2082 = 0.5 = \u221A0.25, so the stretch is S = A^\xBD. On a round bowl the gradient points at the minimum, and \u03B7 = 1 lands in one step. Mapped back, that step is w \u2190 w \u2212 \u03B7\xB7A\u207B\xB9\u2207E. For a general loss, replace A with the Hessian H at the current point: this is Newton's method (slides 28\u201343). Step through it on a curved valley that is not a quadratic.");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: BANANA,
         paths: [{
@@ -4424,7 +4422,7 @@ window.__LESSON_SRC["newton"] = function () { return (function (React) {
         rows: [["Hessian entries N²", N * N >= 1e5 ? (N * N).toExponential(1) : fmt(N * N, 0)], ["memory at 4 bytes each", N * N * 4 >= 1e12 ? fmt(N * N * 4 / 1e12, 1) + " TB" : N * N * 4 >= 1e9 ? fmt(N * N * 4 / 1e9, 1) + " GB" : fmt(N * N * 4 / 1e6, 2) + " MB"]]
       })));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A real loss isn't always a bowl. This one has a saddle in the middle (curving up along w\u2081, down along w\u2082) and two true minima, marked with crosses. Plain Newton from the start goes the wrong way. Using damped Newton, w \u2190 w \u2212 \u03B7(H + \u03BCI)\u207B\xB9\u2207E, reach a minimum (within 0.05) in 8 steps.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Newton's problem 2 (slides 44\u201347): at a saddle the Hessian has a negative eigenvalue, and Newton moves toward the flat point, not the minimum. This loss has a saddle at the centre (curving up along w\u2081, down along w\u2082) and two minima, marked with crosses. Plain Newton from the start heads for the saddle. Using damped Newton, w \u2190 w \u2212 \u03B7(H + \u03BCI)\u207B\xB9\u2207E, reach a minimum (within 0.05) in 8 steps.");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: SADDLE,
         paths: [{
@@ -4495,7 +4493,7 @@ window.__LESSON_SRC["newton"] = function () { return (function (React) {
         met: okS
       }, "reached a minimum within 8 steps"), /*#__PURE__*/React.createElement(Hint, {
         hints: ["Newton jumps to the flat point of the bowl it fits. Near the start that fitted shape curves down along w₂. What is the flat point of a saddle-shaped fit?", "Make every eigenvalue of H + μI positive, but not much more: a huge μ turns Newton into a tiny gradient step of size η/μ. A μ around 1 with η near 1 is worth trying."]
-      })), /*#__PURE__*/React.createElement(Note, null, "Adding \u03BCI is the \"diagonal loading\" behind Levenberg-Marquardt (slide 47). In high dimensions, saddles like this far outnumber bad minima (slides 3-8)."));
+      })), /*#__PURE__*/React.createElement(Note, null, "Adding \u03BCI is the \"diagonal loading\" behind Levenberg-Marquardt (slide 47). In high dimensions, saddles like this far outnumber bad minima (slides 3\u20138). Newton is also too costly for a real network, so next we stay with plain gradient steps and change \u03B7 over time instead."));
     }
     return /*#__PURE__*/React.createElement(LessonFrame, {
       screen: screen,
@@ -5717,7 +5715,7 @@ window.__LESSON_SRC["sched"] = function () { return (function (React) {
     });
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A real network's loss is rugged. This is the loss along one weight of the delivery-time model: a wide valley covered in small dips, with the deepest dip at w = 6. Training starts at w = 0.5 and runs 80 steps. Is there any fixed \u03B7 that ends up settled in the deepest dip?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " lessons 1\u20133 assumed a smooth bowl, and Newton turned out too costly and unstable for real networks. The deck's second issue is the learning rate itself (slides 48\u201354): real losses are rugged, not bowls. Is any single fixed \u03B7 right for the whole of training?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " this is a loss along one weight: a wide valley covered in small dips, with the deepest dip at w = 6. Training starts at w = 0.5 and runs 80 steps. Is there a fixed \u03B7 that ends up settled in the deepest dip?");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, curve(LOSS, res), wTrace(res, 6));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, {
         edge: ok ? THEME.ok : THEME.grid
@@ -5774,7 +5772,7 @@ window.__LESSON_SRC["sched"] = function () { return (function (React) {
     } else if (screen === 2) {
       const etaHold = 2 / RIPPLE_CURV;
       const pAll = Math.pow(0.5, dims);
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. A dip with curvature c has \u03B7_opt = 1/c. Each dip here curves by about ", fmt(RIPPLE_CURV, 1), ", so it can hold the walker only once \u03B7 < 2/c \u2248 ", fmt(etaHold, 2), ". The wide valley curves by just 0.1, so it stays stable up to \u03B7 = 20. A big \u03B7 sees the valley and ignores the dips. A shrinking \u03B7 lets one dip catch you near the bottom.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. A dip with curvature c has \u03B7_opt = 1/c. Each dip here curves by about ", fmt(RIPPLE_CURV, 1), ", so it can hold the walker only once \u03B7 < 2/c \u2248 ", fmt(etaHold, 2), ". The wide valley curves by just 0.1, so it stays stable up to \u03B7 = 20. A big \u03B7 sees the valley and ignores the dips. A shrinking \u03B7 lets one dip catch you near the bottom. That is the deck's \"decaying learning rate\" (slides 50\u201351).");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, curve(LOSS, res), /*#__PURE__*/React.createElement(Trace, {
         series: [{
           vals: res.etas,
@@ -5828,9 +5826,9 @@ window.__LESSON_SRC["sched"] = function () { return (function (React) {
         display: dims
       }), /*#__PURE__*/React.createElement(Note, null, "A flat point is a minimum only if the loss curves up in all N directions. If each direction were a coin flip, the chance would be"), /*#__PURE__*/React.createElement(Readout, {
         rows: [["P(all N curve up) = 0.5^N", pAll < 1e-4 ? pAll.toExponential(1) : fmt(pAll, 4)]]
-      }), /*#__PURE__*/React.createElement(Note, null, "So in large networks most flat points are saddles. Most local minima that do exist have loss close to the global one.")));
+      }), /*#__PURE__*/React.createElement(Note, null, "So in large networks most flat points are saddles. Most local minima that do exist have loss close to the global one. Next: even on a smooth valley, one \u03B7 still zig-zags across the steep direction. Momentum averages the zig-zags away.")));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A second weight, a new landscape: dips are tighter and the deepest one sits at w = 3.5. Training starts at w = 9. Design a schedule that ends settled in that dip after 80 steps.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A different rugged loss: the dips are tighter and the deepest one sits at w = 3.5. Training starts at w = 9. Design a schedule that ends settled in that dip after 80 steps.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, curve(LOSS_C, resC, okC ? [{
         x: 3.5,
         color: THEME.ok,
@@ -7006,8 +7004,8 @@ window.__LESSON_SRC["momentum"] = function () { return (function (React) {
     f: quad(A, W_STAR),
     xr: [-1.5, 4.5],
     yr: [0, 6],
-    xl: "w₁ €/km",
-    yl: "w₂ €/kg"
+    xl: "w₁",
+    yl: "w₂"
   };
   const START = [-1.2, 4.6];
   const N = 60;
@@ -7187,7 +7185,7 @@ window.__LESSON_SRC["momentum"] = function () { return (function (React) {
     const label = (s, r) => r.diverged ? "diverged" : s >= 0 ? "settled at step " + s : "not settled in " + N;
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A narrow valley: per-km and per-kg rates fitted together, with the bowl tilted and stretched 32 to 1. Plain gradient descent zig-zags. The table splits each step into the part across the valley and the part along it. Which part keeps flipping sign? Now average the last few steps. What happens to each part?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " lesson 2 showed that one \u03B7 makes gradient descent zig-zag across the steep direction of a narrow valley and crawl along the flat one. Newton fixes this but costs too much. The deck's cheaper proposal (slides 55\u201358): keep track of the oscillations, damp the directions that bounce, and boost the ones that move steadily.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " a narrow two-weight valley, tilted and stretched 32 to 1 (\u03BA = 32). Plain gradient descent zig-zags. The table splits each step into the part across the valley and the part along it. Which part keeps flipping sign? Now average the last few steps. What happens to each part?");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: VALLEY,
         paths: [{
@@ -7280,7 +7278,7 @@ window.__LESSON_SRC["momentum"] = function () { return (function (React) {
         met: sMom >= 0 && (sGd < 0 || sMom < settleStep(gdRef.pts, W_STAR, TOL))
       }, "momentum: ", label(sMom, mom)), /*#__PURE__*/React.createElement(Goal, {
         met: settleStep(gdRef.pts, W_STAR, TOL) >= 0
-      }, "gradient descent: ", label(settleStep(gdRef.pts, W_STAR, TOL), gdRef))), /*#__PURE__*/React.createElement(Note, null, "\"Settled\" means within 0.1 of the best pair and staying there."));
+      }, "gradient descent: ", label(settleStep(gdRef.pts, W_STAR, TOL), gdRef))), /*#__PURE__*/React.createElement(Note, null, "\"Settled\" means within 0.1 of the minimum and staying there."));
     } else if (screen === 2) {
       question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. The step \u0394W is a running sum of gradients in which older ones fade by \u03B2 each step. A gradient that keeps its sign adds up to 1/(1\u2212\u03B2) times its size. One that flips sign cancels out. Nesterov changes the order: first coast with the old step, then take the gradient where you land. Compare the two.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LossMap, {
@@ -7327,9 +7325,9 @@ window.__LESSON_SRC["momentum"] = function () { return (function (React) {
         met: sMom >= 0
       }, "momentum: ", label(sMom, mom)), /*#__PURE__*/React.createElement(Goal, {
         met: sNes >= 0
-      }, "Nesterov: ", label(sNes, nes)), /*#__PURE__*/React.createElement(Note, null, "The bars show how much the gradient from i steps ago still counts: \u03B2\u2071. Nesterov's look-ahead feels the far wall before it gets there, so it overshoots less (slides 67-73).")));
+      }, "Nesterov: ", label(sNes, nes)), /*#__PURE__*/React.createElement(Note, null, "The bars show how much the gradient from i steps ago still counts: \u03B2\u2071. Nesterov's look-ahead feels the far wall before it gets there, so it overshoots less (slides 67\u201373). Next: momentum still uses one \u03B7 for every weight. Adaptive methods give each weight its own step size.")));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Same valley, fixed start. Get the rates to settle within 0.1 of the best pair in at most 30 steps. Plain gradient descent can't do it with any \u03B7: its best is about 53 steps. Pick a method and tune it.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Same valley, fixed start. Get the weights to settle within 0.1 of the minimum in at most 30 steps. Plain gradient descent can't do it with any \u03B7: its best is about 53 steps. Pick a method and tune it.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LossMap, {
         surf: VALLEY,
         paths: [{
@@ -7343,7 +7341,7 @@ window.__LESSON_SRC["momentum"] = function () { return (function (React) {
         series: [{
           vals: cRun.pts.map(p => Math.hypot(p[0] - W_STAR[0], p[1] - W_STAR[1])),
           color: THEME.highlight,
-          label: "distance to best"
+          label: "distance to minimum"
         }, {
           vals: cRun.pts.map(() => TOL),
           color: THEME.text,
@@ -7352,7 +7350,7 @@ window.__LESSON_SRC["momentum"] = function () { return (function (React) {
         n: 30,
         yr: [-2, 1],
         log: true,
-        label: "distance to the best pair (log scale), dashed rule at 0.1",
+        label: "distance to the minimum (log scale), dashed rule at 0.1",
         height: 130
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, {
@@ -8508,15 +8506,15 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
   // Aha: divide each weight's gradient by its own typical gradient size. Weights with big, jumpy gradients
   // get small steps, weights with tiny gradients get big ones, so all weights move at a similar pace.
 
-  // w1 = per-km rate (every delivery has a distance: big gradients), w2 = snow surcharge (1 delivery in 30 has snow)
+  // w1: its input is non-zero in every sample (big gradients); w2: its input is non-zero in 1 sample in 30 (tiny gradients)
   const W_STAR = [1.5, 3.0];
   const A = [[6, 0], [0, 0.2]];
   const VALLEY = {
     f: quad(A, W_STAR),
     xr: [-1.5, 4.5],
     yr: [0, 6],
-    xl: "w₁ €/km",
-    yl: "w₂ snow surcharge €"
+    xl: "w₁ (common input)",
+    yl: "w₂ (rare input)"
   };
   const START = [-1.0, 5.5];
   const TILTED = {
@@ -8705,7 +8703,7 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
     const okC = hit >= 0 && hit <= 15;
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Two weights again: the per-km rate, which every delivery uses, and a snow surcharge, which only snowy deliveries use. This time each weight gets its own learning rate. Find a pair that lands within 0.1 of the best in 10 steps. Then compare each weight's typical gradient size with the rate you gave it.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " every method so far uses one \u03B7 for all weights. The deck's \"story so far\" (slide 52) says many convergence problems come from exactly that. Momentum smooths the path but keeps that one \u03B7. The newer methods (slides 76\u201378) scale each weight's step by how large its gradients usually are.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " two weights. w\u2081's input is non-zero in every sample, so its gradients are large. w\u2082's input is non-zero in only 1 sample in 30, so its gradients are tiny. This time each weight gets its own learning rate. Find a pair that lands within 0.1 of the minimum in 10 steps. Then compare each weight's typical gradient size with the \u03B7 you gave it.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LossMap, {
         surf: VALLEY,
         paths: [{
@@ -8714,13 +8712,13 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
           label: pc.diverged ? "diverged" : "after 10 steps"
         }],
         target: W_STAR,
-        ariaLabel: "Per-weight learning rates on the fee valley"
+        ariaLabel: "Per-weight learning rates on the valley"
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, {
         edge: pcOk ? THEME.ok : THEME.grid
       }, /*#__PURE__*/React.createElement(Slider, {
         id: "l6-e1",
-        label: "\u03B7 for the per-km rate",
+        label: "\u03B7 for w\u2081",
         value: e1,
         min: 0.01,
         max: 0.4,
@@ -8729,7 +8727,7 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
         display: fmt(e1, 3)
       }), /*#__PURE__*/React.createElement(Slider, {
         id: "l6-e2",
-        label: "\u03B7 for the snow surcharge",
+        label: "\u03B7 for w\u2082",
         value: e2,
         min: 0.05,
         max: 10,
@@ -8738,8 +8736,8 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
         display: fmt(e2, 2)
       }), /*#__PURE__*/React.createElement(Goal, {
         met: pcOk
-      }, "within 0.1 of the best after 10 steps"), /*#__PURE__*/React.createElement(Readout, {
-        rows: [["typical |gradient|, per-km rate", fmt(rms(pc.g1), 3)], ["typical |gradient|, surcharge", fmt(rms(pc.g2), 3)], ["their ratio", fmt(rms(pc.g1) / (rms(pc.g2) || 1), 1) + " : 1"], ["ratio of your η's (surcharge : km)", fmt(e2 / e1, 1) + " : 1"]]
+      }, "within 0.1 of the minimum after 10 steps"), /*#__PURE__*/React.createElement(Readout, {
+        rows: [["typical |gradient| of w₁", fmt(rms(pc.g1), 3)], ["typical |gradient| of w₂", fmt(rms(pc.g2), 3)], ["their ratio", fmt(rms(pc.g1) / (rms(pc.g2) || 1), 1) + " : 1"], ["ratio of your η's (w₂ : w₁)", fmt(e2 / e1, 1) + " : 1"]]
       })), /*#__PURE__*/React.createElement(Note, null, "Could the optimizer choose these rates itself, using only the gradients it has seen so far?"));
     } else if (screen === 1) {
       question = /*#__PURE__*/React.createElement(React.Fragment, null, "RMSprop does it automatically. It keeps a running average of each weight's squared gradient and divides that weight's step by its root. Race it against plain gradient descent. Which weight gets the bigger effective learning rate, and why? Then try the tilted bowl and the flat saddle. Where does per-weight scaling help least?");
@@ -8766,7 +8764,7 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
         height: 130
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Pills, {
-        options: [["valley", "fee valley"], ["tilted", "tilted valley"], ["plateau", "flat saddle"]],
+        options: [["valley", "rare-input valley"], ["tilted", "tilted valley"], ["plateau", "flat saddle"]],
         value: surfKey,
         onPick: pickSurf
       }), Object.keys(OPTS).map(k => /*#__PURE__*/React.createElement(Toggle, {
@@ -8811,7 +8809,7 @@ window.__LESSON_SRC["adaptive"] = function () { return (function (React) {
         n: 40,
         yr: [-2, 2],
         log: true,
-        label: "effective learning rate on w₂ over 40 steps, " + (surfKey === "plateau" ? "flat saddle" : surfKey === "tilted" ? "tilted valley" : "fee valley"),
+        label: "effective learning rate on w₂ over 40 steps, " + (surfKey === "plateau" ? "flat saddle" : surfKey === "tilted" ? "tilted valley" : "rare-input valley"),
         height: 130
       }));
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Slider, {

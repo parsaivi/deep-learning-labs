@@ -9,7 +9,7 @@ import { THEME, MONO } from "./common";
 const W_STAR = [1.5, 3.0];
 const A = rotA(4, 0.25, -35);
 const EIG = eig2(A);
-const BOWL = { f: quad(A, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁ €/km", yl: "w₂ €/kg" };
+const BOWL = { f: quad(A, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁", yl: "w₂" };
 const START = [-0.6, 5.2];
 
 // S = E diag(s1, s2) E^T, warped coordinates u = S (w - w*)
@@ -157,15 +157,17 @@ export default function NewtonLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        Back to the tilted fee bowl. The red arrow is the downhill direction, and the dashed line goes to the best pair. Drag the point around. Where on the map does downhill point straight at the best pair? What do those places have in common?
+        <b>Where we are:</b> lesson 2 showed that one η can't suit a bowl that curves differently in different directions. Rescaling inputs only fixes an axis-aligned bowl. The deck's fix is to scale <i>and rotate</i> the axes until the bowl is round (slides 23–30). That leads to Newton's method.
+        <br />
+        <b>The puzzle:</b> this is the tilted bowl from lesson 2. The red arrow is −∇E, the direction gradient descent moves. The dashed line goes to the minimum. Drag the point. Where does −∇E point straight at the minimum? What do those places have in common?
       </>
     );
-    stage = <LossMap surf={BOWL} handle={probe} onHandle={onProbe} target={W_STAR} overlay={(P) => gradArrow(BOWL.f, probe, P, W_STAR)} ariaLabel="Tilted fee bowl with the downhill arrow" />;
+    stage = <LossMap surf={BOWL} handle={probe} onHandle={onProbe} target={W_STAR} overlay={(P) => gradArrow(BOWL.f, probe, P, W_STAR)} ariaLabel="Tilted bowl with the negative gradient arrow" />;
     side = (
       <>
         <Panel>
-          <Readout rows={[["angle between −gradient and the best pair", fmt(ang, 1) + "°", ang < 3 ? THEME.ok : THEME.text]]} />
-          <Goal met={ang < 3}>downhill points at the best pair (under 3°)</Goal>
+          <Readout rows={[["angle between −∇E and the direction to the minimum", fmt(ang, 1) + "°", ang < 3 ? THEME.ok : THEME.text]]} />
+          <Goal met={ang < 3}>−∇E points at the minimum (under 3°)</Goal>
         </Panel>
         <Note>The gradient is always perpendicular to the contour line through your point. On a stretched oval, that is rarely toward the centre.</Note>
       </>
@@ -196,11 +198,11 @@ export default function NewtonLesson({ initialScreen }) {
           <Slider id="l3-etau" label="η in the stretched space" value={etaU} min={0.02} max={2.2} stepSize={0.01} onChange={setEtaU} display={fmt(etaU, 2)} />
           <Readout
             rows={[
-              ["distance to best after 1 step", runU.diverged ? "diverged" : fmt(after1, 3)],
+              ["distance to minimum after 1 step", runU.diverged ? "diverged" : fmt(after1, 3)],
               ["distance after 12 steps", runU.diverged ? "diverged" : fmt(distEnd, 3)],
             ]}
           />
-          <Goal met={!runU.diverged && after1 < 0.02}>one step lands on the best pair</Goal>
+          <Goal met={!runU.diverged && after1 < 0.02}>one step lands on the minimum</Goal>
         </Panel>
         <Note>The bowl's curvatures are 4 along the steep axis and 0.25 along the flat one. What stretch turns both into the same curvature?</Note>
       </>
@@ -208,7 +210,7 @@ export default function NewtonLesson({ initialScreen }) {
   } else if (screen === 2) {
     question = (
       <>
-        Name it. Round contours came from s₁ = 2 = √4 and s₂ = 0.5 = √0.25, so S = A^½. Gradient descent in the stretched space, mapped back, is w ← w − η·A⁻¹∇E. For a general loss, A becomes the Hessian at your current point: that is Newton's method. Step through Newton on a curved, non-quadratic valley.
+        <b>What you found:</b> the contours became round at s₁ = 2 = √4 and s₂ = 0.5 = √0.25, so the stretch is S = A^½. On a round bowl the gradient points at the minimum, and η = 1 lands in one step. Mapped back, that step is w ← w − η·A⁻¹∇E. For a general loss, replace A with the Hessian H at the current point: this is Newton's method (slides 28–43). Step through it on a curved valley that is not a quadratic.
       </>
     );
     stage = (
@@ -251,7 +253,7 @@ export default function NewtonLesson({ initialScreen }) {
   } else {
     question = (
       <>
-        A real loss isn't always a bowl. This one has a saddle in the middle (curving up along w₁, down along w₂) and two true minima, marked with crosses. Plain Newton from the start goes the wrong way. Using damped Newton, w ← w − η(H + μI)⁻¹∇E, reach a minimum (within 0.05) in 8 steps.
+        Newton's problem 2 (slides 44–47): at a saddle the Hessian has a negative eigenvalue, and Newton moves toward the flat point, not the minimum. This loss has a saddle at the centre (curving up along w₁, down along w₂) and two minima, marked with crosses. Plain Newton from the start heads for the saddle. Using damped Newton, w ← w − η(H + μI)⁻¹∇E, reach a minimum (within 0.05) in 8 steps.
       </>
     );
     stage = (
@@ -295,7 +297,7 @@ export default function NewtonLesson({ initialScreen }) {
             ]}
           />
         </Panel>
-        <Note>Adding μI is the "diagonal loading" behind Levenberg-Marquardt (slide 47). In high dimensions, saddles like this far outnumber bad minima (slides 3-8).</Note>
+        <Note>Adding μI is the "diagonal loading" behind Levenberg-Marquardt (slide 47). In high dimensions, saddles like this far outnumber bad minima (slides 3–8). Newton is also too costly for a real network, so next we stay with plain gradient steps and change η over time instead.</Note>
       </>
     );
   }

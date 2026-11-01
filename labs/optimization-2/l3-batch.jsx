@@ -2,15 +2,15 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { THEME, MONO } from "./common";
 
 // Lesson 3 - Mini-batches (Optimization II, slides 21-48 and the linear-scaling rule on 65).
-// Aha: averaging b orders cuts the gradient's noise variance by b, which buys a b-times bigger step, so per
-// order read a batch is neither better nor worse, until eta hits the curvature limit. What a batch buys is
-// hardware: a GPU handles b orders in the same time as one, up to its width.
+// Aha: averaging b samples cuts the gradient's noise variance by b, which buys a b-times bigger step, so per
+// sample read a batch is neither better nor worse, until eta hits the curvature limit. What a batch buys is
+// hardware: a GPU handles b samples in the same time as one, up to its width.
 // The race uses the exact expected loss of SGD on this quadratic: per eigen-direction,
 // E[x^2] <- (1 - eta*lam)^2 E[x^2] + eta^2 lam s2 (N - b) / ((N - 1) b).
 
 // @sim-start
 const M3 = makeOrders(41, 2000, 0.9, 1.8, 0.6);
-const S2 = 2 * M3.lossBest; // variance of one order's residual at the best fit
+const S2 = 2 * M3.lossBest; // variance of one sample's residual at the best fit
 const EIG3 = eig2([
   [M3.st.Sxx, M3.st.Sx],
   [M3.st.Sx, 1],
@@ -67,13 +67,13 @@ function bestEta(b, W) {
 const GPU = { W: 64, cap: 1024 };
 const GPU_C = { W: 256, cap: 512 };
 const BUDGET_C = 150;
-const SURF3 = { f: M3.loss, xr: [-0.6, 2.6], yr: [1, 7.6], xl: "rate €/km", yl: "fee of a 4 km order €" };
+const SURF3 = { f: M3.loss, xr: [-0.6, 2.6], yr: [1, 7.6], xl: "slope w₁", yl: "w₂ = prediction at x = 4" };
 const NFAN = 16;
 function bOf(e) {
   return Math.min(M3.n, Math.max(1, Math.round(Math.pow(2, e))));
 }
 function sampleGrad(w, b, r) {
-  // mean gradient over b orders drawn without replacement
+  // mean gradient over b samples drawn without replacement
   const n = M3.n;
   const pick = new Set();
   let g0 = 0;
@@ -114,7 +114,7 @@ function fanOverlay(start, gTrue, draws) {
     const s = P(start[0], start[1]);
     const unit = 70 / Math.hypot(gTrue[0], gTrue[1]);
     const tip = (g) => {
-      // the map's y axis is the fee, so scale both components to pixels the same way P does
+      // the map's y axis is w2, so scale both components to pixels the same way P does
       const e = P(start[0] - g[0] * 0.01, start[1] - g[1] * 0.01);
       const dx = e[0] - s[0];
       const dy = e[1] - s[1];
@@ -134,7 +134,7 @@ function fanOverlay(start, gTrue, draws) {
             <g>
               <Arrow x1={s[0]} y1={s[1]} x2={t[0]} y2={t[1]} color={THEME.highlight} width={3} dash="6 3" />
               <text x={t[0] + 6} y={t[1] - 6} fontFamily={MONO} fontSize={11} fill={THEME.highlight} stroke={THEME.bg} strokeWidth={3} paintOrder="stroke">
-                all 2000 orders
+                all 2000 samples
               </text>
             </g>
           );
@@ -162,7 +162,7 @@ function Race({ b, eta, W, cap, budget }) {
   return (
     <>
       <Plot series={series("ts")} xr={[0, 5]} yr={[-4.5, 1]} logX logY xl="GPU time (ms) →" label="expected extra loss vs time" legend={legend} height={180} hlines={[{ y: EPS3, color: THEME.ok, label: "target" }]} vlines={vl} />
-      <Plot series={series("rd")} xr={[0, 7]} yr={[-4.5, 1]} logX logY xl="orders read →" label="expected extra loss vs orders read" legend={legend} height={150} hlines={[{ y: EPS3, color: THEME.ok, label: "target" }]} />
+      <Plot series={series("rd")} xr={[0, 7]} yr={[-4.5, 1]} logX logY xl="samples read →" label="expected extra loss vs samples read" legend={legend} height={150} hlines={[{ y: EPS3, color: THEME.ok, label: "target" }]} />
     </>
   );
 }
@@ -181,7 +181,7 @@ function StatRows({ s, b, W }) {
         ["time per update", fmt(msPer(b, W), 1) + " ms"],
         ["noise floor of the loss", !s.stable ? "diverges" : s.floor < 1e-6 ? "≈ 0" : s.floor.toExponential(1), s.floor >= EPS3 ? THEME.warn : undefined],
         ["updates to reach target", isFinite(s.k) ? s.k : "never"],
-        ["orders read to target", isFinite(s.k) ? s.reads.toLocaleString() : "—"],
+        ["samples read to target", isFinite(s.k) ? s.reads.toLocaleString() : "—"],
         ["time to target", isFinite(s.t) ? fmt(s.t, 0) + " ms" : "—"],
       ]}
     />
@@ -224,14 +224,16 @@ export default function BatchLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        A month of orders: 2000 of them. The thick dashed arrow is the downhill direction computed from all 2000. Each thin arrow uses only b orders picked at random. How many orders per batch do you need to make the thin arrows <i>half</i> as spread out as with b = 1?
+        <b>Where we are:</b> SGD uses one sample per update and batch uses all N. The deck's middle ground is the mini-batch: average b samples per update (slides 21–48). Two questions: how much does b reduce the noise, and what is a good b?
+        <br />
+        <b>The puzzle:</b> a dataset of 2000 samples. The thick dashed arrow is −∇E computed from all 2000. Each thin arrow uses only b samples picked at random. How large must b be to make the thin arrows <i>half</i> as spread out as with b = 1?
       </>
     );
     stage = <LossMap surf={SURF3} target={M3.best} handle={start} onHandle={onHandle} overlay={fanOverlay(start, fan.gT, fan.draws)} ariaLabel="Loss map with the full-data gradient and 16 mini-batch gradients" />;
     side = (
       <>
         <Panel>
-          <Slider id="l3-b" label="orders per batch b" value={eB} min={0} max={Math.log2(M3.n)} stepSize={0.01} onChange={setEB} display={b} />
+          <Slider id="l3-b" label="batch size b" value={eB} min={0} max={Math.log2(M3.n)} stepSize={0.01} onChange={setEB} display={b} />
           <Readout
             rows={[
               ["spread of a batch gradient (rms, ÷ true size)", fmt(fan.spread, 3)],
@@ -246,14 +248,14 @@ export default function BatchLesson({ initialScreen }) {
   } else if (screen === 1) {
     question = (
       <>
-        Now race to the target (fees within about 2 cents of the best rule) on a GPU that handles 64 orders in parallel: an update costs 0.5 ms plus 1 ms per group of 64. Pick b, then find the η that gets there fastest. Double b and find the best η again. What happens to the best η, to the orders read and to the time?
+        Now race to a target loss (just above the best fit's) on a GPU that processes 64 samples in parallel: an update costs 0.5 ms plus 1 ms per group of 64. Pick b, then find the η that gets there fastest. Double b and find the best η again. What happens to the best η, the number of samples read and the time?
       </>
     );
     stage = <Race b={b2} eta={eta} W={GPU.W} cap={GPU.cap} />;
     side = (
       <>
         <Panel>
-          <Slider id="l3-b2" label="orders per batch b" value={eB2} min={0} max={Math.log2(M3.n)} stepSize={0.01} onChange={setEB2} display={b2} />
+          <Slider id="l3-b2" label="batch size b" value={eB2} min={0} max={Math.log2(M3.n)} stepSize={0.01} onChange={setEB2} display={b2} />
           <LogSlider id="l3-eta" label="learning rate η" value={eta} lo={-4.5} hi={-0.3} onChange={setEta} digits={4} />
           <StatRows s={st2} b={b2} W={GPU.W} />
         </Panel>
@@ -263,7 +265,7 @@ export default function BatchLesson({ initialScreen }) {
   } else if (screen === 2) {
     question = (
       <>
-        Name it. The batch loss is an unbiased estimate of the true loss, with variance var(loss)/b. A b-times smaller variance lets η grow about b times (the <b>linear-scaling rule</b>), so the orders read stay flat: per sample, the convergence rate is O(1/√(bk) + 1/k). The gain is in time: up to the GPU width, a bigger batch costs nothing extra.
+        Name it. The batch loss is an unbiased estimate of the true loss, with variance var(loss)/b. A b-times smaller variance lets η grow about b times (the <b>linear-scaling rule</b>), so the number of samples read stays flat: per sample, the convergence rate is O(1/√(bk) + 1/k). The gain is in time: up to the GPU width, a bigger batch costs nothing extra.
       </>
     );
     const xs = SWEEP.map((s) => s.b);
@@ -272,7 +274,7 @@ export default function BatchLesson({ initialScreen }) {
         <Plot
           series={[
             { xs, ys: SWEEP.map((s) => s.t), color: THEME.highlight, label: "time to target (ms)", width: 2.2 },
-            { xs, ys: SWEEP.map((s) => s.k * s.b), color: THEME.accent, dash: "6 3", label: "orders read", ldy: 14 },
+            { xs, ys: SWEEP.map((s) => s.k * s.b), color: THEME.accent, dash: "6 3", label: "samples read", ldy: 14 },
           ]}
           xr={[0, 3.4]}
           yr={[1.5, 5]}
@@ -299,20 +301,20 @@ export default function BatchLesson({ initialScreen }) {
           </Eq>
           <Readout rows={SWEEP.filter((s) => [1, 16, 64, 256, 1024, 2000].indexOf(s.b) >= 0).map((s) => ["b = " + s.b + ": best η " + fmt(s.eta, 4), fmt(s.t, 0) + " ms"])} />
         </Panel>
-        <Note>Three regimes: below the GPU width time falls about as 1/b; between the width and the curvature limit it barely changes; past the limit η cannot grow, so the extra orders are wasted. Typical choices are 64 to 1024, as large as fits in GPU memory. A small dataset (n &lt; 2000) can simply use full batch.</Note>
+        <Note>Three regimes: below the GPU width time falls about as 1/b; between the width and the curvature limit it barely changes; past the limit η cannot grow, so the extra samples are wasted. Typical choices are 64 to 1024, as large as fits in GPU memory. A small dataset (n &lt; 2000) can simply use full batch (slides 47–48). Next: how to tell from the loss curve whether η itself is right.</Note>
       </>
     );
   } else {
     question = (
       <>
-        A new GPU: 256 orders in parallel, but memory for at most {GPU_C.cap} per batch. Reach the target in {BUDGET_C} ms or less.
+        A new GPU: 256 samples in parallel, but memory for at most {GPU_C.cap} per batch. Reach the target in {BUDGET_C} ms or less.
       </>
     );
     stage = <Race b={bC} eta={etaC} W={GPU_C.W} cap={GPU_C.cap} budget={BUDGET_C} />;
     side = (
       <>
         <Panel edge={okC ? THEME.ok : THEME.grid}>
-          <Slider id="l3-bc" label="orders per batch b" value={eBC} min={0} max={Math.log2(M3.n)} stepSize={0.01} onChange={setEBC} display={bC} />
+          <Slider id="l3-bc" label="batch size b" value={eBC} min={0} max={Math.log2(M3.n)} stepSize={0.01} onChange={setEBC} display={bC} />
           <LogSlider id="l3-etac" label="learning rate η" value={etaC} lo={-4.5} hi={-0.3} onChange={setEtaC} digits={4} />
           <StatRows s={stC} b={bC} W={GPU_C.W} />
           <Goal met={okC}>target reached within {BUDGET_C} ms</Goal>
@@ -327,5 +329,5 @@ export default function BatchLesson({ initialScreen }) {
     );
   }
 
-  return <LessonFrame screen={screen} onScreen={setScreen} title="How many orders per update?" question={question} stage={stage} side={side} />;
+  return <LessonFrame screen={screen} onScreen={setScreen} title="How many samples per update?" question={question} stage={stage} side={side} />;
 }

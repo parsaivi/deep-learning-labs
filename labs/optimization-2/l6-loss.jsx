@@ -65,8 +65,8 @@ function train6(kind, start, eta, steps) {
 // @sim-end
 
 const XR6 = [-14, 14];
-const SURF_L2 = { f: F_L2, xr: XR6, yr: XR6, xl: "w₁ (slack)", yl: "w₂ (rain)", floor: 0.004 };
-const SURF_CE = { f: F_CE, xr: XR6, yr: XR6, xl: "w₁ (slack)", yl: "w₂ (rain)", floor: 0.02 };
+const SURF_L2 = { f: F_L2, xr: XR6, yr: XR6, xl: "w₁", yl: "w₂", floor: 0.004 };
+const SURF_CE = { f: F_CE, xr: XR6, yr: XR6, xl: "w₁", yl: "w₂", floor: 0.02 };
 const LOSSES = [
   ["l2", "L2: (σ(z) − y)²"],
   ["ce", "cross-entropy"],
@@ -109,8 +109,8 @@ function OneOrder({ z }) {
         ]}
         xr={[-8, 8]}
         yr={[0, 4]}
-        xl="score z for a late order (y = 1) →"
-        label="loss of one order"
+        xl="score z for a positive example (y = 1) →"
+        label="loss of one example"
         legend={[{ color: THEME.accent, text: "● cross-entropy −log σ(z)" }, { color: THEME.highlight, dash: "6 3", text: "■ L2 (σ(z) − 1)²" }]}
         height={170}
         vlines={[{ x: z, color: THEME.text, label: "z = " + fmt(z, 1) }]}
@@ -128,7 +128,7 @@ function OneOrder({ z }) {
         yr={[-4, 0.3]}
         logY
         xl="score z →"
-        label="how hard that order pushes the weights (log scale)"
+        label="how hard that example pushes the weights (log scale)"
         legend={[{ color: THEME.accent, text: "|dCE/dz| = |σ − y|" }, { color: THEME.highlight, dash: "6 3", text: "|dL2/dz|" }]}
         height={160}
         vlines={[{ x: z, color: THEME.text }]}
@@ -171,7 +171,9 @@ export default function LossLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        Will an order arrive late? One sigmoid unit reads two numbers per order: minutes of slack before the promised time (x₁) and rain (x₂). It outputs σ(w₁x₁ + w₂x₂), using 100 past orders. Two copies train from the same start with the same η: one minimizes L2, the other cross-entropy. Drag the start into the far corners. Why does one of them crawl?
+        <b>Where we are:</b> everything so far changed <i>how we step</i> on a fixed loss. The deck's last point (slides 66–71) is that the choice of loss (the divergence) also decides how well gradient descent works. A good loss should give a strong push when the model is far off.
+        <br />
+        <b>The puzzle:</b> the slides' setup: a binary classifier with one sigmoid unit, σ(w₁x₁ + w₂x₂), trained on 100 labelled 2-D examples. Two copies train from the same start with the same η: one minimizes L2, the other cross-entropy. Drag the start into the far corners. Why does one of them crawl?
       </>
     );
     stage = maps;
@@ -181,24 +183,24 @@ export default function LossLesson({ initialScreen }) {
           <LogSlider id="l6-eta" label="learning rate η (both)" value={eta} lo={-1} hi={1.5} onChange={setEta} digits={2} />
           {compare}
         </Panel>
-        <Note>The bottom-right corner means "more slack → later, rain → earlier": confidently wrong. Compare the gradient size there with the size near the middle.</Note>
+        <Note>In the bottom-right corner both weights are large with the wrong signs, so the unit is confidently wrong on most examples. Compare the gradient size there with the size near the middle.</Note>
       </>
     );
   } else if (screen === 1) {
     const s = sigm(z);
     question = (
       <>
-        Zoom in on a single late order (y = 1) and the score z the unit gives it. Slide z from right (confidently correct) to left (confidently wrong). As the prediction gets <i>worse</i>, what happens to each loss's push on the weights?
+        Zoom in on a single positive example (y = 1) and the score z = w·x the unit gives it. Slide z from right (confidently correct) to left (confidently wrong). As the prediction gets <i>worse</i>, what happens to each loss's push on the weights?
       </>
     );
     stage = <OneOrder z={z} />;
     side = (
       <>
         <Panel>
-          <Slider id="l6-z" label="score z of the late order" value={z} min={-8} max={8} stepSize={0.01} onChange={setZ} display={fmt(z, 2)} />
+          <Slider id="l6-z" label="score z of the example" value={z} min={-8} max={8} stepSize={0.01} onChange={setZ} display={fmt(z, 2)} />
           <Readout
             rows={[
-              ["predicted P(late) = σ(z)", fmt(s, 4)],
+              ["predicted P(y = 1) = σ(z)", fmt(s, 4)],
               ["● cross-entropy push |σ − y|", fmt(Math.abs(s - 1), 4)],
               ["■ L2 push |2(σ − y) σ(1 − σ)|", Math.abs(2 * (s - 1) * s * (1 - s)).toExponential(2)],
             ]}

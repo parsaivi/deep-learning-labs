@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { THEME, MONO } from "./common";
 
 // Lesson 2 - Why SGD with a fixed step never settles, and how fast eta must shrink (Optimization II, slides 17-20).
-// Aha: even at the best fit, every single order still disagrees with it, so each update still kicks the
+// Aha: even at the best fit, every single sample still disagrees with it, so each update still kicks the
 // weights. The kicks scale with eta, so the walker buzzes in a cloud forever. Shrinking eta shrinks the
 // cloud, but if it shrinks too fast the walker runs out of total travel before it arrives.
 
@@ -31,11 +31,11 @@ function settleRun(o, start, sched, steps) {
 
 function zoomSurf(o) {
   const z = 0.22;
-  return { f: o.loss, xr: [o.best[0] - z, o.best[0] + z], yr: [o.best[1] - z, o.best[1] + z], xl: "rate (zoom)", yl: "fee (zoom)", floor: 0.0005 };
+  return { f: o.loss, xr: [o.best[0] - z, o.best[0] + z], yr: [o.best[1] - z, o.best[1] + z], xl: "w₁ (zoom)", yl: "w₂ (zoom)", floor: 0.0005 };
 }
-const SURF2 = { f: O2.loss, xr: [-0.6, 2.6], yr: [1, 7.6], xl: "rate €/km", yl: "fee of a 4 km order €" };
+const SURF2 = { f: O2.loss, xr: [-0.6, 2.6], yr: [1, 7.6], xl: "slope w₁", yl: "w₂ = prediction at x = 4" };
 const ZOOM2 = zoomSurf(O2);
-const SURF2C = { f: C2.loss, xr: [-1, 2.6], yr: [0.8, 8.2], xl: "rate €/km", yl: "fee of a 4 km order €" };
+const SURF2C = { f: C2.loss, xr: [-1, 2.6], yr: [0.8, 8.2], xl: "slope w₁", yl: "w₂ = prediction at x = 4" };
 const ZOOM2C = zoomSurf(C2);
 
 function tolRing(o, tol, ok) {
@@ -120,7 +120,9 @@ export default function DecayLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        Back to the 40 orders, one order per update, {K2} updates. The right map zooms in on the best fit; the dashed ring has radius {TOL2}. Find a fixed η so that, by the end, the fitter has arrived and stays in the ring for the last {TAIL} updates.
+        <b>Where we are:</b> lesson 1 showed that SGD (one sample per update, shuffled) gets close much faster than batch. But the deck warns that SGD's learning rate needs care (slides 17–20). Can SGD with a fixed η actually converge?
+        <br />
+        <b>The puzzle:</b> the same 40 samples, one sample per update, {K2} updates. The right map zooms in on the best fit; the dashed ring has radius {TOL2}. Find a fixed η so that, by the end, SGD has arrived and stays in the ring for the last {TAIL} updates.
       </>
     );
     stage = (
@@ -135,7 +137,7 @@ export default function DecayLesson({ initialScreen }) {
           <LogSlider id="l2-const" label="fixed learning rate η" value={etaC0} lo={-3} hi={-1} onChange={setEtaC0} digits={4} />
           {status(constRes, TOL2, okConst)}
         </Panel>
-        <Note>Try a large η, then a tiny one. Each fails differently. What is the cloud in the zoom made of, given that the fitter is already next to the best fit?</Note>
+        <Note>Try a large η, then a tiny one. Each fails differently. What is the cloud in the zoom made of, given that SGD is already next to the best fit?</Note>
       </>
     );
   } else if (screen === 1) {
@@ -158,7 +160,7 @@ export default function DecayLesson({ initialScreen }) {
           <Slider id="l2-p" label="decay power p" value={p} min={0} max={2} stepSize={0.01} onChange={setP} display={fmt(p, 2)} />
           {status(res, TOL2, ok)}
         </Panel>
-        <Note>Compare the η trace with the distance trace. When does the cloud start to shrink? With p = 2, where does the fitter stop?</Note>
+        <Note>Compare the η trace with the distance trace. When does the cloud start to shrink? With p = 2, where does it stop?</Note>
       </>
     );
   } else if (screen === 2) {
@@ -166,7 +168,7 @@ export default function DecayLesson({ initialScreen }) {
     const s2 = sumInf(eta0, p, 2);
     question = (
       <>
-        Name it. At the best fit the <i>average</i> gradient is zero, but one order's gradient is not, so a step of size η still kicks the weights. The cloud's width grows with η. For SGD to settle, the steps must shrink, but slowly enough that their total is still unlimited:
+        Name it. At the best fit the <i>average</i> gradient is zero, but one sample's gradient is not, so a step of size η still kicks the weights. The cloud's width grows with η. For SGD to settle, the steps must shrink, but slowly enough that their total is still unlimited:
       </>
     );
     stage = (
@@ -194,14 +196,14 @@ export default function DecayLesson({ initialScreen }) {
           <Goal met={p > 0.5 && p <= 1}>both conditions hold: 0.5 &lt; p ≤ 1</Goal>
         </Panel>
         <Note>
-          ηₖ ∝ 1/k (p = 1) is the fastest shrinking that keeps Σηₖ infinite, and it is the best rate for strongly convex losses. With these conditions SGD converges almost surely: to the optimum for a convex loss, to a stationary point otherwise. In practice the schedule is found by trial (lesson 5).
+          ηₖ ∝ 1/k (p = 1) is the fastest shrinking that keeps Σηₖ infinite, and it is the best rate for strongly convex losses. With these conditions SGD converges almost surely: to the optimum for a convex loss, to a stationary point otherwise. In practice the schedule is found by trial (lesson 5). Next: instead of shrinking η, average more samples per update (mini-batches) to shrink the kicks.
         </Note>
       </>
     );
   } else {
     question = (
       <>
-        A busier city: 60 orders with noisier fees, a start far from the best fit, {K2C} updates. The ring has radius {TOL2C}. Design ηₖ = η₀ · (1 + k/{TAU})^(−p) so that the last {TAIL} updates stay inside it.
+        A harder dataset: 60 noisier samples, a start far from the best fit, {K2C} updates. The ring has radius {TOL2C}. Design ηₖ = η₀ · (1 + k/{TAU})^(−p) so that the last {TAIL} updates stay inside it.
       </>
     );
     stage = (

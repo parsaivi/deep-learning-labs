@@ -163,7 +163,7 @@ function settleStep(pts, target, tol) {
   return k;
 }
 
-// ---------- Optimization II: orders, sampling, SGD ----------
+// ---------- Optimization II: datasets, sampling, SGD ----------
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return function () {
@@ -175,7 +175,7 @@ function gauss(r) {
   const u = Math.max(r(), 1e-12);
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
 }
-// n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+// n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
 function makeOrders(seed, n, rate0, base0, noise) {
   const r = rng(seed);
   const km = new Float64Array(n);
@@ -947,7 +947,7 @@ function Plot({ series, xr, yr, logX, logY, xl, yl, label, height, hlines, vline
   );
 }
 
-// ---------- the orders: km on x, fee on y, fitted lines on top ----------
+// ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
 // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
 function FeePlot({ orders, lines, hi, ticks, height, label }) {
   const H = height || 210;
@@ -966,7 +966,7 @@ function FeePlot({ orders, lines, hi, ticks, height, label }) {
   const fee = (w, km) => w[1] + w[0] * (km - 4);
   const kms = [0, 2, 4, 6, 8];
   return (
-    <svg viewBox={"0 0 620 " + H} style={{ width: "100%", display: "block" }} role="img" aria-label={label || "Orders: distance against fee, with fitted fee lines"}>
+    <svg viewBox={"0 0 620 " + H} style={{ width: "100%", display: "block" }} role="img" aria-label={label || "Training samples (x, y) with fitted lines"}>
       <defs>
         <clipPath id={"fee-" + H}>
           <rect x={PX0} y={top - 4} width={PX1 - PX0} height={bot - top + 8} />
@@ -980,14 +980,14 @@ function FeePlot({ orders, lines, hi, ticks, height, label }) {
       ))}
       {[ylo, (ylo + yhi) / 2, yhi].map((v) => (
         <text key={v} x={PX0 - 5} y={Y(v) + 3.5} textAnchor="end" fontFamily={MONO} fontSize={10} fill={THEME.muted}>
-          €{fmt(v, 0)}
+          {fmt(v, 0)}
         </text>
       ))}
       <text x={PX1} y={H - 2} textAnchor="end" fontFamily={MONO} fontSize={10.5} fill={THEME.muted}>
-        distance (km) →
+        input x →
       </text>
       <text x={PX0 + 6} y={top + 8} fontFamily={MONO} fontSize={10.5} fill={THEME.muted}>
-        {label || "each dot is one order · lines are fee rules"}
+        {label || "each dot is one training sample · lines are fitted models"}
       </text>
       <g clipPath={"url(#fee-" + H + ")"}>
         {Array.from(orders.km).map((km, i) => (

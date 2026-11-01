@@ -29,7 +29,7 @@ from the newest lab. Using `common.jsx` is optional: delete it if you want plain
 A prompt that worked for the three existing labs (replace the deck and folder):
 
 > /aha the deck ../CNN.pdf — one 4-screen lesson per big idea in the deck.
-> Learner profile: reuse the one in GUIDE.md (don't re-ask).
+> Learner profile: reuse the one in GUIDE.md (don't re-ask). Follow the teaching rules in CLAUDE.md.
 > Save each lesson as labs/cnn/l1-<name>.jsx, l2-…, and add it to labs/cnn/lab.json `lessons` with the slide range it covers.
 > You may use the helpers in labs/cnn/common.jsx. Build with `node tools/build.js cnn` and check every screen with tools/shoot.sh.
 
@@ -46,10 +46,11 @@ Notes:
 |---|---|
 | Background | Knows the chain rule and linear algebra; no intuition for networks yet |
 | Theme | Blueprint (dark navy drafting sheet, cyan + amber) |
-| Running story (anchor) | Delivery app: MLP = city delivery zones; Optimization I & II = fitting delivery fees (per-km rate, base fee); Training = the ETA network; Regularization = quoting ETAs from few orders; CNN = checking proof-of-delivery photos for a parcel |
+| Running story (anchor) | **None for new labs** (see CLAUDE.md §2): use the concept and the slides' own examples. Earlier labs used a delivery app: MLP = city delivery zones; Optimization I & II = fitting delivery fees (per-km rate, base fee); Training = the ETA network; Regularization = quoting ETAs from few orders; CNN = checking proof-of-delivery photos for a parcel |
 | Depth | One lesson per big idea, about 6 per deck, each Puzzle → Explore → Name → Challenge |
 
 Change any row here and the next lab follows it.
+The teaching rules (big picture first, no stories unless they simplify, plain readable text, interaction serves a stated claim) live in `CLAUDE.md`, which Claude Code loads automatically in this folder.
 
 ## 3. Build and look
 

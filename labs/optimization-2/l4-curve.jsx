@@ -134,7 +134,9 @@ export default function CurveLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        A delivery-time network with millions of weights (here: a stand-in with the same kind of loss), trained for 300 mini-batch steps. Its loss starts at 2.3. Search η over five orders of magnitude and keep the curves you get. You should find three different ways it fails, and one η that gives the lowest loss.
+        <b>Where we are:</b> we now know <i>how</i> to update: shuffled mini-batches. What's left is the deck's practical question (slides 52–58): how do you choose η for a real network, where you can't compute the curvature?
+        <br />
+        <b>The puzzle:</b> a network with millions of weights (here: a stand-in with the same kind of loss), trained for 300 mini-batch steps. Its loss starts at 2.3. Search η over five orders of magnitude and keep the curves you get. You should find three different ways it fails, and one η that gives the lowest loss.
       </>
     );
     stage = <LossPanel t={t} eta={eta} pins={pins} />;
@@ -173,7 +175,7 @@ export default function CurveLesson({ initialScreen }) {
   } else if (screen === 2) {
     question = (
       <>
-        Name it. The learning rate is the first hyperparameter to tune (with small regularization), and the loss curve says which way to move it. A good update is about a thousandth of the weight it changes.
+        Name it. The learning rate is the first hyperparameter to tune (with small regularization), and the loss curve says which way to move it. A good update is about a thousandth of the weight it changes (slide 58). Next: η doesn't have to stay fixed. A schedule changes it during training.
       </>
     );
     stage = (

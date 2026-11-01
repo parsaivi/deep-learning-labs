@@ -5,13 +5,13 @@ import { THEME, MONO } from "./common";
 // Aha: divide each weight's gradient by its own typical gradient size. Weights with big, jumpy gradients
 // get small steps, weights with tiny gradients get big ones, so all weights move at a similar pace.
 
-// w1 = per-km rate (every delivery has a distance: big gradients), w2 = snow surcharge (1 delivery in 30 has snow)
+// w1: its input is non-zero in every sample (big gradients); w2: its input is non-zero in 1 sample in 30 (tiny gradients)
 const W_STAR = [1.5, 3.0];
 const A = [
   [6, 0],
   [0, 0.2],
 ];
-const VALLEY = { f: quad(A, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁ €/km", yl: "w₂ snow surcharge €" };
+const VALLEY = { f: quad(A, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁ (common input)", yl: "w₂ (rare input)" };
 const START = [-1.0, 5.5];
 const TILTED = { f: quad(rotA(6, 0.2, 40), W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁", yl: "w₂" };
 function plateau(w) {
@@ -122,26 +122,28 @@ export default function AdaptiveLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        Two weights again: the per-km rate, which every delivery uses, and a snow surcharge, which only snowy deliveries use. This time each weight gets its own learning rate. Find a pair that lands within 0.1 of the best in 10 steps. Then compare each weight's typical gradient size with the rate you gave it.
+        <b>Where we are:</b> every method so far uses one η for all weights. The deck's "story so far" (slide 52) says many convergence problems come from exactly that. Momentum smooths the path but keeps that one η. The newer methods (slides 76–78) scale each weight's step by how large its gradients usually are.
+        <br />
+        <b>The puzzle:</b> two weights. w₁'s input is non-zero in every sample, so its gradients are large. w₂'s input is non-zero in only 1 sample in 30, so its gradients are tiny. This time each weight gets its own learning rate. Find a pair that lands within 0.1 of the minimum in 10 steps. Then compare each weight's typical gradient size with the η you gave it.
       </>
     );
     stage = (
       <>
-        <LossMap surf={VALLEY} paths={[{ pts: pc.pts, color: THEME.highlight, label: pc.diverged ? "diverged" : "after 10 steps" }]} target={W_STAR} ariaLabel="Per-weight learning rates on the fee valley" />
+        <LossMap surf={VALLEY} paths={[{ pts: pc.pts, color: THEME.highlight, label: pc.diverged ? "diverged" : "after 10 steps" }]} target={W_STAR} ariaLabel="Per-weight learning rates on the valley" />
       </>
     );
     side = (
       <>
         <Panel edge={pcOk ? THEME.ok : THEME.grid}>
-          <Slider id="l6-e1" label="η for the per-km rate" value={e1} min={0.01} max={0.4} stepSize={0.001} onChange={setE1} display={fmt(e1, 3)} />
-          <Slider id="l6-e2" label="η for the snow surcharge" value={e2} min={0.05} max={10} stepSize={0.01} onChange={setE2} display={fmt(e2, 2)} />
-          <Goal met={pcOk}>within 0.1 of the best after 10 steps</Goal>
+          <Slider id="l6-e1" label="η for w₁" value={e1} min={0.01} max={0.4} stepSize={0.001} onChange={setE1} display={fmt(e1, 3)} />
+          <Slider id="l6-e2" label="η for w₂" value={e2} min={0.05} max={10} stepSize={0.01} onChange={setE2} display={fmt(e2, 2)} />
+          <Goal met={pcOk}>within 0.1 of the minimum after 10 steps</Goal>
           <Readout
             rows={[
-              ["typical |gradient|, per-km rate", fmt(rms(pc.g1), 3)],
-              ["typical |gradient|, surcharge", fmt(rms(pc.g2), 3)],
+              ["typical |gradient| of w₁", fmt(rms(pc.g1), 3)],
+              ["typical |gradient| of w₂", fmt(rms(pc.g2), 3)],
               ["their ratio", fmt(rms(pc.g1) / (rms(pc.g2) || 1), 1) + " : 1"],
-              ["ratio of your η's (surcharge : km)", fmt(e2 / e1, 1) + " : 1"],
+              ["ratio of your η's (w₂ : w₁)", fmt(e2 / e1, 1) + " : 1"],
             ]}
           />
         </Panel>
@@ -175,7 +177,7 @@ export default function AdaptiveLesson({ initialScreen }) {
         <Panel>
           <Pills
             options={[
-              ["valley", "fee valley"],
+              ["valley", "rare-input valley"],
               ["tilted", "tilted valley"],
               ["plateau", "flat saddle"],
             ]}
@@ -208,7 +210,7 @@ export default function AdaptiveLesson({ initialScreen }) {
           n={40}
           yr={[-2, 2]}
           log
-          label={"effective learning rate on w₂ over 40 steps, " + (surfKey === "plateau" ? "flat saddle" : surfKey === "tilted" ? "tilted valley" : "fee valley")}
+          label={"effective learning rate on w₂ over 40 steps, " + (surfKey === "plateau" ? "flat saddle" : surfKey === "tilted" ? "tilted valley" : "rare-input valley")}
           height={130}
         />
       </>

@@ -8,7 +8,7 @@ import { THEME, MONO } from "./common";
 const W_STAR = [1.5, 3.0];
 const A = rotA(8, 0.25, 20);
 const EIG = eig2(A);
-const VALLEY = { f: quad(A, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁ €/km", yl: "w₂ €/kg" };
+const VALLEY = { f: quad(A, W_STAR), xr: [-1.5, 4.5], yr: [0, 6], xl: "w₁", yl: "w₂" };
 const START = [-1.2, 4.6];
 const N = 60;
 const TOL = 0.1;
@@ -114,7 +114,9 @@ export default function MomentumLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        A narrow valley: per-km and per-kg rates fitted together, with the bowl tilted and stretched 32 to 1. Plain gradient descent zig-zags. The table splits each step into the part across the valley and the part along it. Which part keeps flipping sign? Now average the last few steps. What happens to each part?
+        <b>Where we are:</b> lesson 2 showed that one η makes gradient descent zig-zag across the steep direction of a narrow valley and crawl along the flat one. Newton fixes this but costs too much. The deck's cheaper proposal (slides 55–58): keep track of the oscillations, damp the directions that bounce, and boost the ones that move steadily.
+        <br />
+        <b>The puzzle:</b> a narrow two-weight valley, tilted and stretched 32 to 1 (κ = 32). Plain gradient descent zig-zags. The table splits each step into the part across the valley and the part along it. Which part keeps flipping sign? Now average the last few steps. What happens to each part?
       </>
     );
     stage = <LossMap surf={VALLEY} paths={[{ pts: gd.pts.slice(0, 21), color: THEME.highlight, label: "first 20 steps" }]} handle={start} onHandle={onStart} target={W_STAR} ariaLabel="Gradient descent zig-zagging down a narrow valley" />;
@@ -168,7 +170,7 @@ export default function MomentumLesson({ initialScreen }) {
           <Goal met={sMom >= 0 && (sGd < 0 || sMom < settleStep(gdRef.pts, W_STAR, TOL))}>momentum: {label(sMom, mom)}</Goal>
           <Goal met={settleStep(gdRef.pts, W_STAR, TOL) >= 0}>gradient descent: {label(settleStep(gdRef.pts, W_STAR, TOL), gdRef)}</Goal>
         </Panel>
-        <Note>"Settled" means within 0.1 of the best pair and staying there.</Note>
+        <Note>"Settled" means within 0.1 of the minimum and staying there.</Note>
       </>
     );
   } else if (screen === 2) {
@@ -209,14 +211,14 @@ export default function MomentumLesson({ initialScreen }) {
           </Eq>
           <Goal met={sMom >= 0}>momentum: {label(sMom, mom)}</Goal>
           <Goal met={sNes >= 0}>Nesterov: {label(sNes, nes)}</Goal>
-          <Note>The bars show how much the gradient from i steps ago still counts: βⁱ. Nesterov's look-ahead feels the far wall before it gets there, so it overshoots less (slides 67-73).</Note>
+          <Note>The bars show how much the gradient from i steps ago still counts: βⁱ. Nesterov's look-ahead feels the far wall before it gets there, so it overshoots less (slides 67–73). Next: momentum still uses one η for every weight. Adaptive methods give each weight its own step size.</Note>
         </Panel>
       </>
     );
   } else {
     question = (
       <>
-        Same valley, fixed start. Get the rates to settle within 0.1 of the best pair in at most 30 steps. Plain gradient descent can't do it with any η: its best is about 53 steps. Pick a method and tune it.
+        Same valley, fixed start. Get the weights to settle within 0.1 of the minimum in at most 30 steps. Plain gradient descent can't do it with any η: its best is about 53 steps. Pick a method and tune it.
       </>
     );
     stage = (
@@ -224,9 +226,9 @@ export default function MomentumLesson({ initialScreen }) {
         <LossMap surf={VALLEY} paths={[{ pts: shown, color: THEME.highlight, label: cRun.diverged ? "diverged" : "after 30 steps" }]} target={W_STAR} ariaLabel="Challenge valley" />
         <Trace
           series={[
-            { vals: cRun.pts.map((p) => Math.hypot(p[0] - W_STAR[0], p[1] - W_STAR[1])), color: THEME.highlight, label: "distance to best" },
+            { vals: cRun.pts.map((p) => Math.hypot(p[0] - W_STAR[0], p[1] - W_STAR[1])), color: THEME.highlight, label: "distance to minimum" },
             { vals: cRun.pts.map(() => TOL), color: THEME.text, dash: "3 3" },
-          ]} n={30} yr={[-2, 1]} log label="distance to the best pair (log scale), dashed rule at 0.1" height={130} />
+          ]} n={30} yr={[-2, 1]} log label="distance to the minimum (log scale), dashed rule at 0.1" height={130} />
       </>
     );
     side = (

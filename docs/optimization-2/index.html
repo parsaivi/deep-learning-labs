@@ -57,12 +57,12 @@
       <h1>Optimization Lab II</h1>
       <div class="sub">Deep Learning · Training Neural Networks: Optimization II · six hands-on lessons</div>
     </div>
-    <div class="stamp">Sheet: fitting delivery fees from the order log<br>Maps: loss over rate &amp; fee · <b>brighter = lower loss</b> · + = best fit</div>
+    <div class="stamp">Maps: loss over the two weights · <b>brighter = lower loss</b> · + = best fit</div>
   </header>
   <nav id="nav"></nav>
   <main id="main"></main>
   <footer>
-    Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Optimization Lab for part I. Source deck: M. Soleymani, "Training Neural Networks: Optimization" (Optimization II), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). Orders, fees and the networks in lessons 4–5 are made-up teaching models: lessons 3 and 5 plot the exact expected SGD loss, the others run real SGD with a fixed random seed.
+    Each lesson runs Puzzle → Explore → Name → Challenge (interactive-educator method), for a learner who knows the chain rule and linear algebra but has no picture of networks yet. It follows the Optimization Lab for part I. Source deck: M. Soleymani, "Training Neural Networks: Optimization" (Optimization II), Sharif University of Technology (after CMU 11-785 and Stanford cs231n). The datasets and the networks in lessons 4–5 are made-up teaching models: lessons 3 and 5 plot the exact expected SGD loss, the others run real SGD with a fixed random seed.
     <br><a href="../">← all labs</a>
   </footer>
 </div>
@@ -244,7 +244,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
     return k;
   }
 
-  // ---------- Optimization II: orders, sampling, SGD ----------
+  // ---------- Optimization II: datasets, sampling, SGD ----------
   function rng(seed) {
     let s = seed >>> 0 || 1;
     return function () {
@@ -256,7 +256,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
     const u = Math.max(r(), 1e-12);
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
   }
-  // n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+  // n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
   function makeOrders(seed, n, rate0, base0, noise) {
     const r = rng(seed);
     const km = new Float64Array(n);
@@ -1534,7 +1534,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
     }, m.label) : null));
   }
 
-  // ---------- the orders: km on x, fee on y, fitted lines on top ----------
+  // ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
   // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
   function FeePlot({
     orders,
@@ -1566,7 +1566,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
         display: "block"
       },
       role: "img",
-      "aria-label": label || "Orders: distance against fee, with fitted fee lines"
+      "aria-label": label || "Training samples (x, y) with fitted lines"
     }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
       id: "fee-" + H
     }, /*#__PURE__*/React.createElement("rect", {
@@ -1597,20 +1597,20 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
       fontFamily: MONO,
       fontSize: 10,
       fill: THEME.muted
-    }, "\u20AC", fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
+    }, fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
       x: PX1,
       y: H - 2,
       textAnchor: "end",
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, "distance (km) \u2192"), /*#__PURE__*/React.createElement("text", {
+    }, "input x \u2192"), /*#__PURE__*/React.createElement("text", {
       x: PX0 + 6,
       y: top + 8,
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, label || "each dot is one order · lines are fee rules"), /*#__PURE__*/React.createElement("g", {
+    }, label || "each dot is one training sample · lines are fitted models"), /*#__PURE__*/React.createElement("g", {
       clipPath: "url(#fee-" + H + ")"
     }, Array.from(orders.km).map((km, i) => /*#__PURE__*/React.createElement("circle", {
       key: i,
@@ -1697,7 +1697,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
   }
 
   // Lesson 1 - Batch vs stochastic updates, and the order of presentation (Optimization II, slides 3-19).
-  // Aha: a batch update waits to hear from every order before it moves once; SGD moves after each order,
+  // Aha: a batch update waits to hear from every sample before it moves once; SGD moves after each sample,
   // so for the same work it gets far further. But a fixed, structured order makes the pulls repeat every
   // epoch, and the weights repeat with them: a cycle that never closes in on the best fit.
 
@@ -1723,18 +1723,18 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
     f: O1.loss,
     xr: [-0.6, 2.6],
     yr: [1, 7.6],
-    xl: "rate €/km",
-    yl: "fee of a 4 km order €"
+    xl: "slope w₁",
+    yl: "w₂ = prediction at x = 4"
   };
   const SURF_C = {
     f: C1.loss,
     xr: [-0.6, 2.6],
     yr: [1, 9.4],
-    xl: "rate €/km",
-    yl: "fee of a 4 km order €"
+    xl: "slope w₁",
+    yl: "w₂ = prediction at x = 4"
   };
-  const ORDERS = [["sorted", "log order: sorted by km"], ["fixed", "one random order, reused"], ["shuffle", "reshuffle every epoch"]];
-  const METHODS = [["batch", "batch: 1 update per pass"], ["sgd", "one order at a time"]];
+  const ORDERS = [["sorted", "dataset order: sorted by x"], ["fixed", "one random order, reused"], ["shuffle", "reshuffle every epoch"]];
+  const METHODS = [["batch", "batch: 1 update per pass"], ["sgd", "SGD: 1 update per sample"]];
   function epochDiamonds(run, upto) {
     return function (P) {
       return /*#__PURE__*/React.createElement("g", null, run.epochEnd.filter(i => i <= upto).map(i => {
@@ -1804,7 +1804,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
     if (screen === 0) {
       const dB = dist(batchRun.w, O1.best);
       const dS = dist(sgdRun.w, O1.best);
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Forty past orders, each with a distance and the fee the customer accepted. Two fitters search for the fee rule (a rate per km and the fee of a 4 km order). Reading one order and computing its gradient costs one unit of work. The batch fitter reads all 40, then moves once. The other moves after every order. With the same work, who ends closer to the best fit (+)?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " Optimization I studied how to step on a given loss. But the loss is an average over N training samples, and computing its full gradient means reading all N samples before every single step (slides 2\u20135). Optimization II asks: do we need all of them before we move?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " 40 training samples (x, y), fitted with a line \u0177 = w\u2081(x \u2212 4) + w\u2082. Computing the gradient on one sample costs one unit of work. Batch gradient descent reads all 40, then takes one step. The alternative takes a step after every sample. With the same work budget, which ends closer to the best fit (+)?");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: SURF,
         target: O1.best,
@@ -1825,11 +1825,11 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
           label: "one at a time",
           width: 1.4
         }],
-        ariaLabel: "Loss over rate and fee with the batch path and the one-order-at-a-time path"
+        ariaLabel: "Loss over the two weights with the batch path and the per-sample path"
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Slider, {
         id: "l1-reads",
-        label: "work budget (orders read)",
+        label: "work budget (sample gradients)",
         value: reads,
         min: 40,
         max: 400,
@@ -1857,10 +1857,10 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
           color: THEME.accent,
           label: "one at a time"
         }]
-      }), /*#__PURE__*/React.createElement(Note, null, "Drag the start anywhere. Does the winner change? At what budget does the batch fitter catch up?"));
+      }), /*#__PURE__*/React.createElement(Note, null, "Drag the start anywhere. Does the winner change? At what budget does batch catch up?"));
     } else if (screen === 1 || screen === 2) {
-      const seqText = order === "sorted" ? "short orders first, long orders last, every pass" : order === "fixed" ? "the same shuffled list, every pass" : "a fresh shuffle each pass";
-      question = screen === 1 ? /*#__PURE__*/React.createElement(React.Fragment, null, "Now only the one-at-a-time fitter, for 10 passes (epochs). The log is stored sorted by distance. Scrub through the updates: the ring on the right is the order being used. Where does each pass end (\u25C6)? Then change the visiting order and compare.") : /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. Updating after every sample is ", /*#__PURE__*/React.createElement("b", null, "stochastic gradient descent"), "; one pass over all N samples is an ", /*#__PURE__*/React.createElement("b", null, "epoch"), ", and gives N updates. Each update pulls the line toward one order. With a fixed order, the same pulls come in the same sequence every epoch, so the weights trace the same loop: a ", /*#__PURE__*/React.createElement("b", null, "cycle"), ". The \u25C6 at each epoch end sits at the same spot instead of closing in.");
+      const seqText = order === "sorted" ? "small x first, large x last, every pass" : order === "fixed" ? "the same shuffled list, every pass" : "a fresh shuffle each pass";
+      question = screen === 1 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Claim to test:"), " per-sample updates only work if the samples come in random order (slides 10\u201314). Here is per-sample updating for 10 passes over the data (epochs), with the dataset sorted by x. Scrub through the updates: the ring on the right is the current sample. Where does each pass end (\u25C6)? Then change the visiting order and compare.") : /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. Updating after every sample is ", /*#__PURE__*/React.createElement("b", null, "stochastic gradient descent"), "; one pass over all N samples is an ", /*#__PURE__*/React.createElement("b", null, "epoch"), ", and gives N updates. Each update pulls the line toward one sample. With a fixed order, the same pulls come in the same sequence every epoch, so the weights trace the same loop: a ", /*#__PURE__*/React.createElement("b", null, "cycle"), ". The \u25C6 at each epoch end sits at the same spot instead of closing in. Reshuffling every epoch breaks the cycle (slides 10\u201315). Next: even with shuffling, a fixed \u03B7 never fully settles.");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: SURF,
         target: O1.best,
@@ -1873,7 +1873,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
           label: "update " + k
         }],
         overlay: epochDiamonds(exRun, k),
-        ariaLabel: "Loss over rate and fee with the SGD path; diamonds mark the end of each epoch"
+        ariaLabel: "Loss over the two weights with the SGD path; diamonds mark the end of each epoch"
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Pills, {
         options: ORDERS,
@@ -1914,7 +1914,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
           color: THEME.accent,
           label: "after update " + k
         }]
-      }), screen === 1 ? /*#__PURE__*/React.createElement(Note, null, "Scrub through one epoch of the sorted log. Which way does the line tilt in the first half, and in the second?") : /*#__PURE__*/React.createElement(Eq, {
+      }), screen === 1 ? /*#__PURE__*/React.createElement(Note, null, "Scrub through one epoch of the sorted data. Which way does the line tilt in the first half, and in the second?") : /*#__PURE__*/React.createElement(Eq, {
         size: 12.5
       }, "for each epoch:", /*#__PURE__*/React.createElement("br", null), "\xA0\xA0shuffle the N samples", /*#__PURE__*/React.createElement("br", null), "\xA0\xA0for n = 1..N: W \u2190 W \u2212 \u03B7 \u2207loss(x\u207D\u207F\u207E, y\u207D\u207F\u207E)"));
     } else {
@@ -1927,7 +1927,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
           ok: !chRun.diverged && Math.abs(feeAt(chRun.w, km) - b) <= TOL_C
         };
       });
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A second city: 60 orders, and again the log is stored sorted by distance. You can afford ", EPOCHS_C, " passes over it (180 order reads). The fee rule must be fair at both ends: within \u20AC", fmt(TOL_C, 2), " of the best possible fee for a 1 km and an 8 km order. Pick the method, the visiting order and \u03B7.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A new dataset: 60 samples, again stored sorted by x. You can afford ", EPOCHS_C, " passes over it (180 sample gradients). The fitted line must be accurate at both ends: its prediction at x = 1 and at x = 8 within ", fmt(TOL_C, 2), " of the best fit's. Pick the method, the visiting order and \u03B7.");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: SURF_C,
         target: C1.best,
@@ -1941,7 +1941,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
           label: methodC === "batch" ? "batch" : "SGD"
         }],
         overlay: methodC === "batch" ? undefined : epochDiamonds(chRun, chRun.pts.length),
-        ariaLabel: "Loss over rate and fee for the second city with your run"
+        ariaLabel: "Loss over the two weights for the new dataset with your run"
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, {
         edge: chOk ? THEME.ok : THEME.grid
@@ -1962,13 +1962,13 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
         onChange: setEtaC,
         digits: 3
       }), /*#__PURE__*/React.createElement(Readout, {
-        rows: [["updates made", methodC === "batch" ? EPOCHS_C : 60 * EPOCHS_C], ["worst fee error at 1 km / 8 km", chRun.diverged ? "diverged" : "€" + fmt(chFair, 3)]]
+        rows: [["updates made", methodC === "batch" ? EPOCHS_C : 60 * EPOCHS_C], ["worst prediction error at x = 1 / x = 8", chRun.diverged ? "diverged" : fmt(chFair, 3)]]
       }), /*#__PURE__*/React.createElement(Goal, {
         met: chOk
-      }, "both fees within \u20AC", fmt(TOL_C, 2), " of the best fit"), methodC === "sgd" && orderC === "shuffle" && /*#__PURE__*/React.createElement(Btn, {
+      }, "both predictions within ", fmt(TOL_C, 2), " of the best fit"), methodC === "sgd" && orderC === "shuffle" && /*#__PURE__*/React.createElement(Btn, {
         onClick: reshuffle
       }, "new shuffle (seed ", seedC, ")"), /*#__PURE__*/React.createElement(Hint, {
-        hints: ["Batch makes only 3 updates in 3 passes. Is that enough, whatever η is?", "With the sorted log, the last orders of each pass are all long trips, so the pass always ends tilted toward them. Change the visiting order (any well-mixed order removes that structure), then tune η: big enough to arrive in 180 updates, small enough that the last few single-order kicks do not throw the line off. Around 0.02 is a good region."]
+        hints: ["Batch makes only 3 updates in 3 passes. Is that enough, whatever η is?", "With sorted data, the last samples of each pass all have large x, so the pass always ends tilted toward them. Change the visiting order (any well-mixed order removes that structure), then tune η: big enough to arrive in 180 updates, small enough that the last few single-sample kicks do not throw the line off. Around 0.02 is a good region."]
       })), /*#__PURE__*/React.createElement(FeePlot, {
         orders: C1,
         height: 180,
@@ -1989,7 +1989,7 @@ window.__LESSON_SRC["sgd"] = function () { return (function (React) {
     return /*#__PURE__*/React.createElement(LessonFrame, {
       screen: screen,
       onScreen: setScreen,
-      title: "One order at a time",
+      title: "One sample at a time",
       question: question,
       stage: stage,
       side: side
@@ -2172,7 +2172,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
     return k;
   }
 
-  // ---------- Optimization II: orders, sampling, SGD ----------
+  // ---------- Optimization II: datasets, sampling, SGD ----------
   function rng(seed) {
     let s = seed >>> 0 || 1;
     return function () {
@@ -2184,7 +2184,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
     const u = Math.max(r(), 1e-12);
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
   }
-  // n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+  // n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
   function makeOrders(seed, n, rate0, base0, noise) {
     const r = rng(seed);
     const km = new Float64Array(n);
@@ -3462,7 +3462,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
     }, m.label) : null));
   }
 
-  // ---------- the orders: km on x, fee on y, fitted lines on top ----------
+  // ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
   // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
   function FeePlot({
     orders,
@@ -3494,7 +3494,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
         display: "block"
       },
       role: "img",
-      "aria-label": label || "Orders: distance against fee, with fitted fee lines"
+      "aria-label": label || "Training samples (x, y) with fitted lines"
     }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
       id: "fee-" + H
     }, /*#__PURE__*/React.createElement("rect", {
@@ -3525,20 +3525,20 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
       fontFamily: MONO,
       fontSize: 10,
       fill: THEME.muted
-    }, "\u20AC", fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
+    }, fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
       x: PX1,
       y: H - 2,
       textAnchor: "end",
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, "distance (km) \u2192"), /*#__PURE__*/React.createElement("text", {
+    }, "input x \u2192"), /*#__PURE__*/React.createElement("text", {
       x: PX0 + 6,
       y: top + 8,
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, label || "each dot is one order · lines are fee rules"), /*#__PURE__*/React.createElement("g", {
+    }, label || "each dot is one training sample · lines are fitted models"), /*#__PURE__*/React.createElement("g", {
       clipPath: "url(#fee-" + H + ")"
     }, Array.from(orders.km).map((km, i) => /*#__PURE__*/React.createElement("circle", {
       key: i,
@@ -3625,7 +3625,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
   }
 
   // Lesson 2 - Why SGD with a fixed step never settles, and how fast eta must shrink (Optimization II, slides 17-20).
-  // Aha: even at the best fit, every single order still disagrees with it, so each update still kicks the
+  // Aha: even at the best fit, every single sample still disagrees with it, so each update still kicks the
   // weights. The kicks scale with eta, so the walker buzzes in a cloud forever. Shrinking eta shrinks the
   // cloud, but if it shrinks too fast the walker runs out of total travel before it arrives.
 
@@ -3668,8 +3668,8 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
       f: o.loss,
       xr: [o.best[0] - z, o.best[0] + z],
       yr: [o.best[1] - z, o.best[1] + z],
-      xl: "rate (zoom)",
-      yl: "fee (zoom)",
+      xl: "w₁ (zoom)",
+      yl: "w₂ (zoom)",
       floor: 0.0005
     };
   }
@@ -3677,16 +3677,16 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
     f: O2.loss,
     xr: [-0.6, 2.6],
     yr: [1, 7.6],
-    xl: "rate €/km",
-    yl: "fee of a 4 km order €"
+    xl: "slope w₁",
+    yl: "w₂ = prediction at x = 4"
   };
   const ZOOM2 = zoomSurf(O2);
   const SURF2C = {
     f: C2.loss,
     xr: [-1, 2.6],
     yr: [0.8, 8.2],
-    xl: "rate €/km",
-    yl: "fee of a 4 km order €"
+    xl: "slope w₁",
+    yl: "w₂ = prediction at x = 4"
   };
   const ZOOM2C = zoomSurf(C2);
   function tolRing(o, tol, ok) {
@@ -3838,7 +3838,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
     }, "the last ", TAIL, " updates all stay inside the ring (radius ", fmt(tol, 3), ")"));
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Back to the 40 orders, one order per update, ", K2, " updates. The right map zooms in on the best fit; the dashed ring has radius ", TOL2, ". Find a fixed \u03B7 so that, by the end, the fitter has arrived and stays in the ring for the last ", TAIL, " updates.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " lesson 1 showed that SGD (one sample per update, shuffled) gets close much faster than batch. But the deck warns that SGD's learning rate needs care (slides 17\u201320). Can SGD with a fixed \u03B7 actually converge?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " the same 40 samples, one sample per update, ", K2, " updates. The right map zooms in on the best fit; the dashed ring has radius ", TOL2, ". Find a fixed \u03B7 so that, by the end, SGD has arrived and stays in the ring for the last ", TAIL, " updates.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Views, {
         o: O2,
         surf: SURF2,
@@ -3858,7 +3858,7 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
         hi: -1,
         onChange: setEtaC0,
         digits: 4
-      }), status(constRes, TOL2, okConst)), /*#__PURE__*/React.createElement(Note, null, "Try a large \u03B7, then a tiny one. Each fails differently. What is the cloud in the zoom made of, given that the fitter is already next to the best fit?"));
+      }), status(constRes, TOL2, okConst)), /*#__PURE__*/React.createElement(Note, null, "Try a large \u03B7, then a tiny one. Each fails differently. What is the cloud in the zoom made of, given that SGD is already next to the best fit?"));
     } else if (screen === 1) {
       question = /*#__PURE__*/React.createElement(React.Fragment, null, "Let \u03B7 shrink: \u03B7\u2096 = \u03B7\u2080 \xB7 (1 + k/", TAU, ")^(\u2212p). With p = 0 it is constant. Find a pair (\u03B7\u2080, p) that lands in the ring and stays. Then push p up to 2 with a small \u03B7\u2080. What goes wrong now?");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Views, {
@@ -3889,11 +3889,11 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
         stepSize: 0.01,
         onChange: setP,
         display: fmt(p, 2)
-      }), status(res, TOL2, ok)), /*#__PURE__*/React.createElement(Note, null, "Compare the \u03B7 trace with the distance trace. When does the cloud start to shrink? With p = 2, where does the fitter stop?"));
+      }), status(res, TOL2, ok)), /*#__PURE__*/React.createElement(Note, null, "Compare the \u03B7 trace with the distance trace. When does the cloud start to shrink? With p = 2, where does it stop?"));
     } else if (screen === 2) {
       const s1 = sumInf(eta0, p, 1);
       const s2 = sumInf(eta0, p, 2);
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. At the best fit the ", /*#__PURE__*/React.createElement("i", null, "average"), " gradient is zero, but one order's gradient is not, so a step of size \u03B7 still kicks the weights. The cloud's width grows with \u03B7. For SGD to settle, the steps must shrink, but slowly enough that their total is still unlimited:");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. At the best fit the ", /*#__PURE__*/React.createElement("i", null, "average"), " gradient is zero, but one sample's gradient is not, so a step of size \u03B7 still kicks the weights. The cloud's width grows with \u03B7. For SGD to settle, the steps must shrink, but slowly enough that their total is still unlimited:");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Views, {
         o: O2,
         surf: SURF2,
@@ -3926,9 +3926,9 @@ window.__LESSON_SRC["decay"] = function () { return (function (React) {
         rows: [["Σ ηₖ over all k", isFinite(s1) ? "≈ " + fmt(s1, 2) + " (finite: can stall)" : "∞", isFinite(s1) ? THEME.warn : THEME.ok], ["Σ ηₖ² over all k", isFinite(s2) ? "≈ " + fmt(s2, 4) + " (finite)" : "∞ (cloud never dies)", isFinite(s2) ? THEME.ok : THEME.warn]]
       }), /*#__PURE__*/React.createElement(Goal, {
         met: p > 0.5 && p <= 1
-      }, "both conditions hold: 0.5 < p \u2264 1")), /*#__PURE__*/React.createElement(Note, null, "\u03B7\u2096 \u221D 1/k (p = 1) is the fastest shrinking that keeps \u03A3\u03B7\u2096 infinite, and it is the best rate for strongly convex losses. With these conditions SGD converges almost surely: to the optimum for a convex loss, to a stationary point otherwise. In practice the schedule is found by trial (lesson 5)."));
+      }, "both conditions hold: 0.5 < p \u2264 1")), /*#__PURE__*/React.createElement(Note, null, "\u03B7\u2096 \u221D 1/k (p = 1) is the fastest shrinking that keeps \u03A3\u03B7\u2096 infinite, and it is the best rate for strongly convex losses. With these conditions SGD converges almost surely: to the optimum for a convex loss, to a stationary point otherwise. In practice the schedule is found by trial (lesson 5). Next: instead of shrinking \u03B7, average more samples per update (mini-batches) to shrink the kicks."));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A busier city: 60 orders with noisier fees, a start far from the best fit, ", K2C, " updates. The ring has radius ", TOL2C, ". Design \u03B7\u2096 = \u03B7\u2080 \xB7 (1 + k/", TAU, ")^(\u2212p) so that the last ", TAIL, " updates stay inside it.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A harder dataset: 60 noisier samples, a start far from the best fit, ", K2C, " updates. The ring has radius ", TOL2C, ". Design \u03B7\u2096 = \u03B7\u2080 \xB7 (1 + k/", TAU, ")^(\u2212p) so that the last ", TAIL, " updates stay inside it.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Views, {
         o: C2,
         surf: SURF2C,
@@ -4147,7 +4147,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
     return k;
   }
 
-  // ---------- Optimization II: orders, sampling, SGD ----------
+  // ---------- Optimization II: datasets, sampling, SGD ----------
   function rng(seed) {
     let s = seed >>> 0 || 1;
     return function () {
@@ -4159,7 +4159,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
     const u = Math.max(r(), 1e-12);
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
   }
-  // n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+  // n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
   function makeOrders(seed, n, rate0, base0, noise) {
     const r = rng(seed);
     const km = new Float64Array(n);
@@ -5437,7 +5437,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
     }, m.label) : null));
   }
 
-  // ---------- the orders: km on x, fee on y, fitted lines on top ----------
+  // ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
   // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
   function FeePlot({
     orders,
@@ -5469,7 +5469,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
         display: "block"
       },
       role: "img",
-      "aria-label": label || "Orders: distance against fee, with fitted fee lines"
+      "aria-label": label || "Training samples (x, y) with fitted lines"
     }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
       id: "fee-" + H
     }, /*#__PURE__*/React.createElement("rect", {
@@ -5500,20 +5500,20 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
       fontFamily: MONO,
       fontSize: 10,
       fill: THEME.muted
-    }, "\u20AC", fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
+    }, fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
       x: PX1,
       y: H - 2,
       textAnchor: "end",
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, "distance (km) \u2192"), /*#__PURE__*/React.createElement("text", {
+    }, "input x \u2192"), /*#__PURE__*/React.createElement("text", {
       x: PX0 + 6,
       y: top + 8,
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, label || "each dot is one order · lines are fee rules"), /*#__PURE__*/React.createElement("g", {
+    }, label || "each dot is one training sample · lines are fitted models"), /*#__PURE__*/React.createElement("g", {
       clipPath: "url(#fee-" + H + ")"
     }, Array.from(orders.km).map((km, i) => /*#__PURE__*/React.createElement("circle", {
       key: i,
@@ -5600,15 +5600,15 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
   }
 
   // Lesson 3 - Mini-batches (Optimization II, slides 21-48 and the linear-scaling rule on 65).
-  // Aha: averaging b orders cuts the gradient's noise variance by b, which buys a b-times bigger step, so per
-  // order read a batch is neither better nor worse, until eta hits the curvature limit. What a batch buys is
-  // hardware: a GPU handles b orders in the same time as one, up to its width.
+  // Aha: averaging b samples cuts the gradient's noise variance by b, which buys a b-times bigger step, so per
+  // sample read a batch is neither better nor worse, until eta hits the curvature limit. What a batch buys is
+  // hardware: a GPU handles b samples in the same time as one, up to its width.
   // The race uses the exact expected loss of SGD on this quadratic: per eigen-direction,
   // E[x^2] <- (1 - eta*lam)^2 E[x^2] + eta^2 lam s2 (N - b) / ((N - 1) b).
 
   // @sim-start
   const M3 = makeOrders(41, 2000, 0.9, 1.8, 0.6);
-  const S2 = 2 * M3.lossBest; // variance of one order's residual at the best fit
+  const S2 = 2 * M3.lossBest; // variance of one sample's residual at the best fit
   const EIG3 = eig2([[M3.st.Sxx, M3.st.Sx], [M3.st.Sx, 1]]);
   const LAMS = [EIG3.l1, EIG3.l2];
   const START3 = [2.2, 1.8];
@@ -5683,15 +5683,15 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
     f: M3.loss,
     xr: [-0.6, 2.6],
     yr: [1, 7.6],
-    xl: "rate €/km",
-    yl: "fee of a 4 km order €"
+    xl: "slope w₁",
+    yl: "w₂ = prediction at x = 4"
   };
   const NFAN = 16;
   function bOf(e) {
     return Math.min(M3.n, Math.max(1, Math.round(Math.pow(2, e))));
   }
   function sampleGrad(w, b, r) {
-    // mean gradient over b orders drawn without replacement
+    // mean gradient over b samples drawn without replacement
     const n = M3.n;
     const pick = new Set();
     let g0 = 0;
@@ -5738,7 +5738,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
       const s = P(start[0], start[1]);
       const unit = 70 / Math.hypot(gTrue[0], gTrue[1]);
       const tip = g => {
-        // the map's y axis is the fee, so scale both components to pixels the same way P does
+        // the map's y axis is w2, so scale both components to pixels the same way P does
         const e = P(start[0] - g[0] * 0.01, start[1] - g[1] * 0.01);
         const dx = e[0] - s[0];
         const dy = e[1] - s[1];
@@ -5776,7 +5776,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
           stroke: THEME.bg,
           strokeWidth: 3,
           paintOrder: "stroke"
-        }, "all 2000 orders"));
+        }, "all 2000 samples"));
       })());
     };
   }
@@ -5849,8 +5849,8 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
       yr: [-4.5, 1],
       logX: true,
       logY: true,
-      xl: "orders read \u2192",
-      label: "expected extra loss vs orders read",
+      xl: "samples read \u2192",
+      label: "expected extra loss vs samples read",
       legend: legend,
       height: 150,
       hlines: [{
@@ -5884,7 +5884,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
       rows: [["batch", "does not fit in GPU memory", THEME.warn]]
     });
     return /*#__PURE__*/React.createElement(Readout, {
-      rows: [["time per update", fmt(msPer(b, W), 1) + " ms"], ["noise floor of the loss", !s.stable ? "diverges" : s.floor < 1e-6 ? "≈ 0" : s.floor.toExponential(1), s.floor >= EPS3 ? THEME.warn : undefined], ["updates to reach target", isFinite(s.k) ? s.k : "never"], ["orders read to target", isFinite(s.k) ? s.reads.toLocaleString() : "—"], ["time to target", isFinite(s.t) ? fmt(s.t, 0) + " ms" : "—"]]
+      rows: [["time per update", fmt(msPer(b, W), 1) + " ms"], ["noise floor of the loss", !s.stable ? "diverges" : s.floor < 1e-6 ? "≈ 0" : s.floor.toExponential(1), s.floor >= EPS3 ? THEME.warn : undefined], ["updates to reach target", isFinite(s.k) ? s.k : "never"], ["samples read to target", isFinite(s.k) ? s.reads.toLocaleString() : "—"], ["time to target", isFinite(s.t) ? fmt(s.t, 0) + " ms" : "—"]]
     });
   }
   function BatchLesson({
@@ -5924,7 +5924,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
     const okC = stC.fits && stC.t <= BUDGET_C;
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A month of orders: 2000 of them. The thick dashed arrow is the downhill direction computed from all 2000. Each thin arrow uses only b orders picked at random. How many orders per batch do you need to make the thin arrows ", /*#__PURE__*/React.createElement("i", null, "half"), " as spread out as with b = 1?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " SGD uses one sample per update and batch uses all N. The deck's middle ground is the mini-batch: average b samples per update (slides 21\u201348). Two questions: how much does b reduce the noise, and what is a good b?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " a dataset of 2000 samples. The thick dashed arrow is \u2212\u2207E computed from all 2000. Each thin arrow uses only b samples picked at random. How large must b be to make the thin arrows ", /*#__PURE__*/React.createElement("i", null, "half"), " as spread out as with b = 1?");
       stage = /*#__PURE__*/React.createElement(LossMap, {
         surf: SURF3,
         target: M3.best,
@@ -5935,7 +5935,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Slider, {
         id: "l3-b",
-        label: "orders per batch b",
+        label: "batch size b",
         value: eB,
         min: 0,
         max: Math.log2(M3.n),
@@ -5948,7 +5948,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
         onClick: resample
       }, "draw new batches")), /*#__PURE__*/React.createElement(Note, null, "Find the b where the spread is half its b = 1 value, then where it is a quarter. Every batch gradient is still right on average: the thin arrows scatter around the thick one, not off to one side."));
     } else if (screen === 1) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Now race to the target (fees within about 2 cents of the best rule) on a GPU that handles 64 orders in parallel: an update costs 0.5 ms plus 1 ms per group of 64. Pick b, then find the \u03B7 that gets there fastest. Double b and find the best \u03B7 again. What happens to the best \u03B7, to the orders read and to the time?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Now race to a target loss (just above the best fit's) on a GPU that processes 64 samples in parallel: an update costs 0.5 ms plus 1 ms per group of 64. Pick b, then find the \u03B7 that gets there fastest. Double b and find the best \u03B7 again. What happens to the best \u03B7, the number of samples read and the time?");
       stage = /*#__PURE__*/React.createElement(Race, {
         b: b2,
         eta: eta,
@@ -5957,7 +5957,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Slider, {
         id: "l3-b2",
-        label: "orders per batch b",
+        label: "batch size b",
         value: eB2,
         min: 0,
         max: Math.log2(M3.n),
@@ -5978,7 +5978,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
         W: GPU.W
       })), /*#__PURE__*/React.createElement(Note, null, "The grey dotted curve is b = 1 and the white dashed one is the full batch, each at its own best \u03B7. A step that is too large for the batch's noise raises the floor and the curve never reaches the target."));
     } else if (screen === 2) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. The batch loss is an unbiased estimate of the true loss, with variance var(loss)/b. A b-times smaller variance lets \u03B7 grow about b times (the ", /*#__PURE__*/React.createElement("b", null, "linear-scaling rule"), "), so the orders read stay flat: per sample, the convergence rate is O(1/\u221A(bk) + 1/k). The gain is in time: up to the GPU width, a bigger batch costs nothing extra.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. The batch loss is an unbiased estimate of the true loss, with variance var(loss)/b. A b-times smaller variance lets \u03B7 grow about b times (the ", /*#__PURE__*/React.createElement("b", null, "linear-scaling rule"), "), so the number of samples read stays flat: per sample, the convergence rate is O(1/\u221A(bk) + 1/k). The gain is in time: up to the GPU width, a bigger batch costs nothing extra.");
       const xs = SWEEP.map(s => s.b);
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Plot, {
         series: [{
@@ -5992,7 +5992,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
           ys: SWEEP.map(s => s.k * s.b),
           color: THEME.accent,
           dash: "6 3",
-          label: "orders read",
+          label: "samples read",
           ldy: 14
         }],
         xr: [0, 3.4],
@@ -6039,9 +6039,9 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
         size: 12.5
       }, "BatchErr = (1/b) \u03A3\u1D62 loss(f(x\u1D62; W), y\u1D62)", /*#__PURE__*/React.createElement("br", null), "E[BatchErr] = E[loss] \xA0\xA0var(BatchErr) = var(loss)/b", /*#__PURE__*/React.createElement("br", null), "batch \xD7 N \xA0\u21D2\xA0 \u03B7 \xD7 N (rule of thumb)"), /*#__PURE__*/React.createElement(Readout, {
         rows: SWEEP.filter(s => [1, 16, 64, 256, 1024, 2000].indexOf(s.b) >= 0).map(s => ["b = " + s.b + ": best η " + fmt(s.eta, 4), fmt(s.t, 0) + " ms"])
-      })), /*#__PURE__*/React.createElement(Note, null, "Three regimes: below the GPU width time falls about as 1/b; between the width and the curvature limit it barely changes; past the limit \u03B7 cannot grow, so the extra orders are wasted. Typical choices are 64 to 1024, as large as fits in GPU memory. A small dataset (n < 2000) can simply use full batch."));
+      })), /*#__PURE__*/React.createElement(Note, null, "Three regimes: below the GPU width time falls about as 1/b; between the width and the curvature limit it barely changes; past the limit \u03B7 cannot grow, so the extra samples are wasted. Typical choices are 64 to 1024, as large as fits in GPU memory. A small dataset (n < 2000) can simply use full batch (slides 47\u201348). Next: how to tell from the loss curve whether \u03B7 itself is right."));
     } else {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A new GPU: 256 orders in parallel, but memory for at most ", GPU_C.cap, " per batch. Reach the target in ", BUDGET_C, " ms or less.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A new GPU: 256 samples in parallel, but memory for at most ", GPU_C.cap, " per batch. Reach the target in ", BUDGET_C, " ms or less.");
       stage = /*#__PURE__*/React.createElement(Race, {
         b: bC,
         eta: etaC,
@@ -6053,7 +6053,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
         edge: okC ? THEME.ok : THEME.grid
       }, /*#__PURE__*/React.createElement(Slider, {
         id: "l3-bc",
-        label: "orders per batch b",
+        label: "batch size b",
         value: eBC,
         min: 0,
         max: Math.log2(M3.n),
@@ -6081,7 +6081,7 @@ window.__LESSON_SRC["batch"] = function () { return (function (React) {
     return /*#__PURE__*/React.createElement(LessonFrame, {
       screen: screen,
       onScreen: setScreen,
-      title: "How many orders per update?",
+      title: "How many samples per update?",
       question: question,
       stage: stage,
       side: side
@@ -6264,7 +6264,7 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
     return k;
   }
 
-  // ---------- Optimization II: orders, sampling, SGD ----------
+  // ---------- Optimization II: datasets, sampling, SGD ----------
   function rng(seed) {
     let s = seed >>> 0 || 1;
     return function () {
@@ -6276,7 +6276,7 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
     const u = Math.max(r(), 1e-12);
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
   }
-  // n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+  // n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
   function makeOrders(seed, n, rate0, base0, noise) {
     const r = rng(seed);
     const km = new Float64Array(n);
@@ -7554,7 +7554,7 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
     }, m.label) : null));
   }
 
-  // ---------- the orders: km on x, fee on y, fitted lines on top ----------
+  // ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
   // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
   function FeePlot({
     orders,
@@ -7586,7 +7586,7 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
         display: "block"
       },
       role: "img",
-      "aria-label": label || "Orders: distance against fee, with fitted fee lines"
+      "aria-label": label || "Training samples (x, y) with fitted lines"
     }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
       id: "fee-" + H
     }, /*#__PURE__*/React.createElement("rect", {
@@ -7617,20 +7617,20 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
       fontFamily: MONO,
       fontSize: 10,
       fill: THEME.muted
-    }, "\u20AC", fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
+    }, fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
       x: PX1,
       y: H - 2,
       textAnchor: "end",
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, "distance (km) \u2192"), /*#__PURE__*/React.createElement("text", {
+    }, "input x \u2192"), /*#__PURE__*/React.createElement("text", {
       x: PX0 + 6,
       y: top + 8,
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, label || "each dot is one order · lines are fee rules"), /*#__PURE__*/React.createElement("g", {
+    }, label || "each dot is one training sample · lines are fitted models"), /*#__PURE__*/React.createElement("g", {
       clipPath: "url(#fee-" + H + ")"
     }, Array.from(orders.km).map((km, i) => /*#__PURE__*/React.createElement("circle", {
       key: i,
@@ -7887,7 +7887,7 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
     }, "clear kept"));
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A delivery-time network with millions of weights (here: a stand-in with the same kind of loss), trained for 300 mini-batch steps. Its loss starts at 2.3. Search \u03B7 over five orders of magnitude and keep the curves you get. You should find three different ways it fails, and one \u03B7 that gives the lowest loss.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " we now know ", /*#__PURE__*/React.createElement("i", null, "how"), " to update: shuffled mini-batches. What's left is the deck's practical question (slides 52\u201358): how do you choose \u03B7 for a real network, where you can't compute the curvature?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " a network with millions of weights (here: a stand-in with the same kind of loss), trained for 300 mini-batch steps. Its loss starts at 2.3. Search \u03B7 over five orders of magnitude and keep the curves you get. You should find three different ways it fails, and one \u03B7 that gives the lowest loss.");
       stage = /*#__PURE__*/React.createElement(LossPanel, {
         t: t,
         eta: eta,
@@ -7925,7 +7925,7 @@ window.__LESSON_SRC["curve"] = function () { return (function (React) {
         rows: lossRows(t)
       }), pinBox), /*#__PURE__*/React.createElement(Note, null, "Why would the ratio work as a gauge on any network, while a good \u03B7 of 1e-3 here might be useless on another one?"));
     } else if (screen === 2) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. The learning rate is the first hyperparameter to tune (with small regularization), and the loss curve says which way to move it. A good update is about a thousandth of the weight it changes.");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. The learning rate is the first hyperparameter to tune (with small regularization), and the loss curve says which way to move it. A good update is about a thousandth of the weight it changes (slide 58). Next: \u03B7 doesn't have to stay fixed. A schedule changes it during training.");
       stage = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LossPanel, {
         t: t,
         eta: eta,
@@ -8161,7 +8161,7 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
     return k;
   }
 
-  // ---------- Optimization II: orders, sampling, SGD ----------
+  // ---------- Optimization II: datasets, sampling, SGD ----------
   function rng(seed) {
     let s = seed >>> 0 || 1;
     return function () {
@@ -8173,7 +8173,7 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
     const u = Math.max(r(), 1e-12);
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
   }
-  // n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+  // n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
   function makeOrders(seed, n, rate0, base0, noise) {
     const r = rng(seed);
     const km = new Float64Array(n);
@@ -9451,7 +9451,7 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
     }, m.label) : null));
   }
 
-  // ---------- the orders: km on x, fee on y, fitted lines on top ----------
+  // ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
   // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
   function FeePlot({
     orders,
@@ -9483,7 +9483,7 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
         display: "block"
       },
       role: "img",
-      "aria-label": label || "Orders: distance against fee, with fitted fee lines"
+      "aria-label": label || "Training samples (x, y) with fitted lines"
     }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
       id: "fee-" + H
     }, /*#__PURE__*/React.createElement("rect", {
@@ -9514,20 +9514,20 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
       fontFamily: MONO,
       fontSize: 10,
       fill: THEME.muted
-    }, "\u20AC", fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
+    }, fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
       x: PX1,
       y: H - 2,
       textAnchor: "end",
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, "distance (km) \u2192"), /*#__PURE__*/React.createElement("text", {
+    }, "input x \u2192"), /*#__PURE__*/React.createElement("text", {
       x: PX0 + 6,
       y: top + 8,
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, label || "each dot is one order · lines are fee rules"), /*#__PURE__*/React.createElement("g", {
+    }, label || "each dot is one training sample · lines are fitted models"), /*#__PURE__*/React.createElement("g", {
       clipPath: "url(#fee-" + H + ")"
     }, Array.from(orders.km).map((km, i) => /*#__PURE__*/React.createElement("circle", {
       key: i,
@@ -9815,7 +9815,7 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
     }));
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "A fresh network, 300 steps. Its loss is very sharp at the start: the first predictions are wildly off. The middle chart multiplies \u03B7 by the sharpest curvature at each step. Find a single fixed \u03B7 that ends below ", TARGET5, ".");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " lesson 2 showed that \u03B7 must shrink for SGD to settle, and lesson 4 showed how to find a good starting \u03B7. The deck ends this topic with learning-rate schedules: decay, and warmup at the start (slides 59\u201365). Why would you ever start \u03B7 ", /*#__PURE__*/React.createElement("i", null, "low"), "?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " a freshly initialized network, 300 steps. Its loss is very sharp at the start: the first predictions are wildly off. The middle chart multiplies \u03B7 by the sharpest curvature at each step. Find a single fixed \u03B7 that ends below ", TARGET5, ".");
       stage = /*#__PURE__*/React.createElement(Charts, {
         t: tP,
         T: T5,
@@ -9852,7 +9852,7 @@ window.__LESSON_SRC["warmup"] = function () { return (function (React) {
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Eq, {
         size: 12.5
-      }, "step: \xA0\xA0\u03B1\u2080, then \xD70.1 at fixed points (e.g. ResNet: epochs 30, 60, 90)", /*#__PURE__*/React.createElement("br", null), "cosine: \u03B1\u209C = \xBD \u03B1\u2080 (1 + cos(t\u03C0/T))", /*#__PURE__*/React.createElement("br", null), "linear: \u03B1\u209C = \u03B1\u2080 (1 \u2212 t/T)", /*#__PURE__*/React.createElement("br", null), "1/\u221At: \xA0\xA0\u03B1\u209C = \u03B1\u2080 / \u221At \xA0(here \u221A(1 + t/10))", /*#__PURE__*/React.createElement("br", null), "warmup: rise linearly from 0 (e.g. first ~5,000 iterations)"), controls(kind, setKind, peak, setPeak, warm, setWarm, "l5n")), /*#__PURE__*/React.createElement(Note, null, "Rule of thumb from large-batch training: batch size \xD7 N \u21D2 initial learning rate \xD7 N (lesson 3), and use warmup, because that larger \u03B7 is exactly what explodes on a fresh network."));
+      }, "step: \xA0\xA0\u03B1\u2080, then \xD70.1 at fixed points (e.g. ResNet: epochs 30, 60, 90)", /*#__PURE__*/React.createElement("br", null), "cosine: \u03B1\u209C = \xBD \u03B1\u2080 (1 + cos(t\u03C0/T))", /*#__PURE__*/React.createElement("br", null), "linear: \u03B1\u209C = \u03B1\u2080 (1 \u2212 t/T)", /*#__PURE__*/React.createElement("br", null), "1/\u221At: \xA0\xA0\u03B1\u209C = \u03B1\u2080 / \u221At \xA0(here \u221A(1 + t/10))", /*#__PURE__*/React.createElement("br", null), "warmup: rise linearly from 0 (e.g. first ~5,000 iterations)"), controls(kind, setKind, peak, setPeak, warm, setWarm, "l5n")), /*#__PURE__*/React.createElement(Note, null, "Rule of thumb from large-batch training: batch size \xD7 N \u21D2 initial learning rate \xD7 N (lesson 3), and use warmup, because that larger \u03B7 is exactly what explodes on a fresh network. Next: the loss function itself also shapes how gradient descent behaves."));
     } else {
       question = /*#__PURE__*/React.createElement(React.Fragment, null, "A bigger model: its start is twice as sharp, and you can afford only ", T5C, " steps. Design a schedule that ends below ", TARGET5C, " with no NaN.");
       stage = /*#__PURE__*/React.createElement(Charts, {
@@ -10052,7 +10052,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
     return k;
   }
 
-  // ---------- Optimization II: orders, sampling, SGD ----------
+  // ---------- Optimization II: datasets, sampling, SGD ----------
   function rng(seed) {
     let s = seed >>> 0 || 1;
     return function () {
@@ -10064,7 +10064,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
     const u = Math.max(r(), 1e-12);
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
   }
-  // n orders: km in [0.5, 8], fee = base0 + rate0 * km + noise. The model uses x = km - 4, so w = [rate, fee of a 4 km order].
+  // n samples: x in [0.5, 8], y = base0 + rate0 * x + noise. The model uses x - 4, so w = [slope, prediction at x = 4].
   function makeOrders(seed, n, rate0, base0, noise) {
     const r = rng(seed);
     const km = new Float64Array(n);
@@ -11342,7 +11342,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
     }, m.label) : null));
   }
 
-  // ---------- the orders: km on x, fee on y, fitted lines on top ----------
+  // ---------- the samples: x on the horizontal axis, y vertical, fitted lines on top ----------
   // lines: [{ w: [rate, base], color, dash, label }]; hi: index of an order to ring; ticks: [{ km, lo, hi, ok }] tolerance whiskers
   function FeePlot({
     orders,
@@ -11374,7 +11374,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
         display: "block"
       },
       role: "img",
-      "aria-label": label || "Orders: distance against fee, with fitted fee lines"
+      "aria-label": label || "Training samples (x, y) with fitted lines"
     }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
       id: "fee-" + H
     }, /*#__PURE__*/React.createElement("rect", {
@@ -11405,20 +11405,20 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
       fontFamily: MONO,
       fontSize: 10,
       fill: THEME.muted
-    }, "\u20AC", fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
+    }, fmt(v, 0))), /*#__PURE__*/React.createElement("text", {
       x: PX1,
       y: H - 2,
       textAnchor: "end",
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, "distance (km) \u2192"), /*#__PURE__*/React.createElement("text", {
+    }, "input x \u2192"), /*#__PURE__*/React.createElement("text", {
       x: PX0 + 6,
       y: top + 8,
       fontFamily: MONO,
       fontSize: 10.5,
       fill: THEME.muted
-    }, label || "each dot is one order · lines are fee rules"), /*#__PURE__*/React.createElement("g", {
+    }, label || "each dot is one training sample · lines are fitted models"), /*#__PURE__*/React.createElement("g", {
       clipPath: "url(#fee-" + H + ")"
     }, Array.from(orders.km).map((km, i) => /*#__PURE__*/React.createElement("circle", {
       key: i,
@@ -11580,16 +11580,16 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
     f: F_L2,
     xr: XR6,
     yr: XR6,
-    xl: "w₁ (slack)",
-    yl: "w₂ (rain)",
+    xl: "w₁",
+    yl: "w₂",
     floor: 0.004
   };
   const SURF_CE = {
     f: F_CE,
     xr: XR6,
     yr: XR6,
-    xl: "w₁ (slack)",
-    yl: "w₂ (rain)",
+    xl: "w₁",
+    yl: "w₂",
     floor: 0.02
   };
   const LOSSES = [["l2", "L2: (σ(z) − y)²"], ["ce", "cross-entropy"]];
@@ -11659,8 +11659,8 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
       }],
       xr: [-8, 8],
       yr: [0, 4],
-      xl: "score z for a late order (y = 1) \u2192",
-      label: "loss of one order",
+      xl: "score z for a positive example (y = 1) \u2192",
+      label: "loss of one example",
       legend: [{
         color: THEME.accent,
         text: "● cross-entropy −log σ(z)"
@@ -11703,7 +11703,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
       yr: [-4, 0.3],
       logY: true,
       xl: "score z \u2192",
-      label: "how hard that order pushes the weights (log scale)",
+      label: "how hard that example pushes the weights (log scale)",
       legend: [{
         color: THEME.accent,
         text: "|dCE/dz| = |σ − y|"
@@ -11757,7 +11757,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
     });
     let question, stage, side;
     if (screen === 0) {
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Will an order arrive late? One sigmoid unit reads two numbers per order: minutes of slack before the promised time (x\u2081) and rain (x\u2082). It outputs \u03C3(w\u2081x\u2081 + w\u2082x\u2082), using 100 past orders. Two copies train from the same start with the same \u03B7: one minimizes L2, the other cross-entropy. Drag the start into the far corners. Why does one of them crawl?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, "Where we are:"), " everything so far changed ", /*#__PURE__*/React.createElement("i", null, "how we step"), " on a fixed loss. The deck's last point (slides 66\u201371) is that the choice of loss (the divergence) also decides how well gradient descent works. A good loss should give a strong push when the model is far off.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, "The puzzle:"), " the slides' setup: a binary classifier with one sigmoid unit, \u03C3(w\u2081x\u2081 + w\u2082x\u2082), trained on 100 labelled 2-D examples. Two copies train from the same start with the same \u03B7: one minimizes L2, the other cross-entropy. Drag the start into the far corners. Why does one of them crawl?");
       stage = maps;
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(LogSlider, {
         id: "l6-eta",
@@ -11767,16 +11767,16 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
         hi: 1.5,
         onChange: setEta,
         digits: 2
-      }), compare), /*#__PURE__*/React.createElement(Note, null, "The bottom-right corner means \"more slack \u2192 later, rain \u2192 earlier\": confidently wrong. Compare the gradient size there with the size near the middle."));
+      }), compare), /*#__PURE__*/React.createElement(Note, null, "In the bottom-right corner both weights are large with the wrong signs, so the unit is confidently wrong on most examples. Compare the gradient size there with the size near the middle."));
     } else if (screen === 1) {
       const s = sigm(z);
-      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Zoom in on a single late order (y = 1) and the score z the unit gives it. Slide z from right (confidently correct) to left (confidently wrong). As the prediction gets ", /*#__PURE__*/React.createElement("i", null, "worse"), ", what happens to each loss's push on the weights?");
+      question = /*#__PURE__*/React.createElement(React.Fragment, null, "Zoom in on a single positive example (y = 1) and the score z = w\xB7x the unit gives it. Slide z from right (confidently correct) to left (confidently wrong). As the prediction gets ", /*#__PURE__*/React.createElement("i", null, "worse"), ", what happens to each loss's push on the weights?");
       stage = /*#__PURE__*/React.createElement(OneOrder, {
         z: z
       });
       side = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Panel, null, /*#__PURE__*/React.createElement(Slider, {
         id: "l6-z",
-        label: "score z of the late order",
+        label: "score z of the example",
         value: z,
         min: -8,
         max: 8,
@@ -11784,7 +11784,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
         onChange: setZ,
         display: fmt(z, 2)
       }), /*#__PURE__*/React.createElement(Readout, {
-        rows: [["predicted P(late) = σ(z)", fmt(s, 4)], ["● cross-entropy push |σ − y|", fmt(Math.abs(s - 1), 4)], ["■ L2 push |2(σ − y) σ(1 − σ)|", Math.abs(2 * (s - 1) * s * (1 - s)).toExponential(2)]]
+        rows: [["predicted P(y = 1) = σ(z)", fmt(s, 4)], ["● cross-entropy push |σ − y|", fmt(Math.abs(s - 1), 4)], ["■ L2 push |2(σ − y) σ(1 − σ)|", Math.abs(2 * (s - 1) * s * (1 - s)).toExponential(2)]]
       })), /*#__PURE__*/React.createElement(Note, null, "Where is the L2 push largest? What happens to it as z goes past that point toward \u22128?"));
     } else if (screen === 2) {
       question = /*#__PURE__*/React.createElement(React.Fragment, null, "Name it. A good loss is steep far from the optimum, so a bad start still gets a strong push, and gentle near it, ideally like a quadratic bowl, so the steps do not overshoot. L2 on a sigmoid breaks the first rule. The chain rule puts in \u03C3\u2032(z) = \u03C3(1 \u2212 \u03C3), which vanishes exactly when the unit is confidently wrong.");
@@ -11854,7 +11854,7 @@ window.__LESSON_SRC["loss"] = function () { return (function (React) {
 
 <script>
 (function () {
-  var LESSONS = [{"id":"sgd","n":1,"title":"One order at a time","sub":"batch vs SGD · order of samples"},{"id":"decay","n":2,"title":"Why SGD never settles","sub":"constant η jitters · how fast to shrink"},{"id":"batch","n":3,"title":"How many orders per update?","sub":"var/b · GPU width · η ∝ b"},{"id":"curve","n":4,"title":"Read the loss curve","sub":"η too low / too high · update ratio"},{"id":"warmup","n":5,"title":"Warm up, then cool down","sub":"warmup · cosine · linear · 1/√t"},{"id":"loss","n":6,"title":"Steep far, gentle near","sub":"L2 vs cross-entropy · sigmoid"}];
+  var LESSONS = [{"id":"sgd","n":1,"title":"One sample at a time","sub":"batch vs SGD · order of samples"},{"id":"decay","n":2,"title":"Why SGD never settles","sub":"constant η jitters · how fast to shrink"},{"id":"batch","n":3,"title":"How many samples per update?","sub":"var/b · GPU width · η ∝ b"},{"id":"curve","n":4,"title":"Read the loss curve","sub":"η too low / too high · update ratio"},{"id":"warmup","n":5,"title":"Warm up, then cool down","sub":"warmup · cosine · linear · 1/√t"},{"id":"loss","n":6,"title":"Steep far, gentle near","sub":"L2 vs cross-entropy · sigmoid"}];
   var DECKS = {};
   var h = React.createElement;
   var cache = {};

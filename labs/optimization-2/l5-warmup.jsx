@@ -147,7 +147,9 @@ export default function WarmupLesson({ initialScreen }) {
   if (screen === 0) {
     question = (
       <>
-        A fresh network, 300 steps. Its loss is very sharp at the start: the first predictions are wildly off. The middle chart multiplies η by the sharpest curvature at each step. Find a single fixed η that ends below {TARGET5}.
+        <b>Where we are:</b> lesson 2 showed that η must shrink for SGD to settle, and lesson 4 showed how to find a good starting η. The deck ends this topic with learning-rate schedules: decay, and warmup at the start (slides 59–65). Why would you ever start η <i>low</i>?
+        <br />
+        <b>The puzzle:</b> a freshly initialized network, 300 steps. Its loss is very sharp at the start: the first predictions are wildly off. The middle chart multiplies η by the sharpest curvature at each step. Find a single fixed η that ends below {TARGET5}.
       </>
     );
     stage = <Charts t={tP} T={T5} target={TARGET5} />;
@@ -199,7 +201,7 @@ export default function WarmupLesson({ initialScreen }) {
           </Eq>
           {controls(kind, setKind, peak, setPeak, warm, setWarm, "l5n")}
         </Panel>
-        <Note>Rule of thumb from large-batch training: batch size × N ⇒ initial learning rate × N (lesson 3), and use warmup, because that larger η is exactly what explodes on a fresh network.</Note>
+        <Note>Rule of thumb from large-batch training: batch size × N ⇒ initial learning rate × N (lesson 3), and use warmup, because that larger η is exactly what explodes on a fresh network. Next: the loss function itself also shapes how gradient descent behaves.</Note>
       </>
     );
   } else {

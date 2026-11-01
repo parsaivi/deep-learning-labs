@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { THEME, MONO } from "./common";
 
 // Lesson 1 - Batch vs stochastic updates, and the order of presentation (Optimization II, slides 3-19).
-// Aha: a batch update waits to hear from every order before it moves once; SGD moves after each order,
+// Aha: a batch update waits to hear from every sample before it moves once; SGD moves after each sample,
 // so for the same work it gets far further. But a fixed, structured order makes the pulls repeat every
 // epoch, and the weights repeat with them: a cycle that never closes in on the best fit.
 
@@ -24,16 +24,16 @@ function fairness(o, w) {
 }
 // @sim-end
 
-const SURF = { f: O1.loss, xr: [-0.6, 2.6], yr: [1, 7.6], xl: "rate €/km", yl: "fee of a 4 km order €" };
-const SURF_C = { f: C1.loss, xr: [-0.6, 2.6], yr: [1, 9.4], xl: "rate €/km", yl: "fee of a 4 km order €" };
+const SURF = { f: O1.loss, xr: [-0.6, 2.6], yr: [1, 7.6], xl: "slope w₁", yl: "w₂ = prediction at x = 4" };
+const SURF_C = { f: C1.loss, xr: [-0.6, 2.6], yr: [1, 9.4], xl: "slope w₁", yl: "w₂ = prediction at x = 4" };
 const ORDERS = [
-  ["sorted", "log order: sorted by km"],
+  ["sorted", "dataset order: sorted by x"],
   ["fixed", "one random order, reused"],
   ["shuffle", "reshuffle every epoch"],
 ];
 const METHODS = [
   ["batch", "batch: 1 update per pass"],
-  ["sgd", "one order at a time"],
+  ["sgd", "SGD: 1 update per sample"],
 ];
 
 function epochDiamonds(run, upto) {
@@ -85,7 +85,9 @@ export default function SGDLesson({ initialScreen }) {
     const dS = dist(sgdRun.w, O1.best);
     question = (
       <>
-        Forty past orders, each with a distance and the fee the customer accepted. Two fitters search for the fee rule (a rate per km and the fee of a 4 km order). Reading one order and computing its gradient costs one unit of work. The batch fitter reads all 40, then moves once. The other moves after every order. With the same work, who ends closer to the best fit (+)?
+        <b>Where we are:</b> Optimization I studied how to step on a given loss. But the loss is an average over N training samples, and computing its full gradient means reading all N samples before every single step (slides 2–5). Optimization II asks: do we need all of them before we move?
+        <br />
+        <b>The puzzle:</b> 40 training samples (x, y), fitted with a line ŷ = w₁(x − 4) + w₂. Computing the gradient on one sample costs one unit of work. Batch gradient descent reads all 40, then takes one step. The alternative takes a step after every sample. With the same work budget, which ends closer to the best fit (+)?
       </>
     );
     stage = (
@@ -98,13 +100,13 @@ export default function SGDLesson({ initialScreen }) {
           { key: "b", pts: batchRun.pts, color: THEME.highlight, shape: "square", dash: "6 4", label: "batch" },
           { key: "s", pts: sgdRun.pts, color: THEME.accent, shape: "circle", label: "one at a time", width: 1.4 },
         ]}
-        ariaLabel="Loss over rate and fee with the batch path and the one-order-at-a-time path"
+        ariaLabel="Loss over the two weights with the batch path and the per-sample path"
       />
     );
     side = (
       <>
         <Panel>
-          <Slider id="l1-reads" label="work budget (orders read)" value={reads} min={40} max={400} stepSize={1} onChange={setReads} display={reads + " = " + fmt(reads / 40, 1) + " passes"} />
+          <Slider id="l1-reads" label="work budget (sample gradients)" value={reads} min={40} max={400} stepSize={1} onChange={setReads} display={reads + " = " + fmt(reads / 40, 1) + " passes"} />
           <Readout
             rows={[
               ["■ batch: updates made", Math.floor(reads / 40)],
@@ -123,19 +125,19 @@ export default function SGDLesson({ initialScreen }) {
             { w: sgdRun.w, color: THEME.accent, label: "one at a time" },
           ]}
         />
-        <Note>Drag the start anywhere. Does the winner change? At what budget does the batch fitter catch up?</Note>
+        <Note>Drag the start anywhere. Does the winner change? At what budget does batch catch up?</Note>
       </>
     );
   } else if (screen === 1 || screen === 2) {
-    const seqText = order === "sorted" ? "short orders first, long orders last, every pass" : order === "fixed" ? "the same shuffled list, every pass" : "a fresh shuffle each pass";
+    const seqText = order === "sorted" ? "small x first, large x last, every pass" : order === "fixed" ? "the same shuffled list, every pass" : "a fresh shuffle each pass";
     question =
       screen === 1 ? (
         <>
-          Now only the one-at-a-time fitter, for 10 passes (epochs). The log is stored sorted by distance. Scrub through the updates: the ring on the right is the order being used. Where does each pass end (◆)? Then change the visiting order and compare.
+          <b>Claim to test:</b> per-sample updates only work if the samples come in random order (slides 10–14). Here is per-sample updating for 10 passes over the data (epochs), with the dataset sorted by x. Scrub through the updates: the ring on the right is the current sample. Where does each pass end (◆)? Then change the visiting order and compare.
         </>
       ) : (
         <>
-          Name it. Updating after every sample is <b>stochastic gradient descent</b>; one pass over all N samples is an <b>epoch</b>, and gives N updates. Each update pulls the line toward one order. With a fixed order, the same pulls come in the same sequence every epoch, so the weights trace the same loop: a <b>cycle</b>. The ◆ at each epoch end sits at the same spot instead of closing in.
+          Name it. Updating after every sample is <b>stochastic gradient descent</b>; one pass over all N samples is an <b>epoch</b>, and gives N updates. Each update pulls the line toward one sample. With a fixed order, the same pulls come in the same sequence every epoch, so the weights trace the same loop: a <b>cycle</b>. The ◆ at each epoch end sits at the same spot instead of closing in. Reshuffling every epoch breaks the cycle (slides 10–15). Next: even with shuffling, a fixed η never fully settles.
         </>
       );
     stage = (
@@ -144,7 +146,7 @@ export default function SGDLesson({ initialScreen }) {
         target={O1.best}
         paths={[{ key: "e", pts: exRun.pts.slice(0, k + 1), color: THEME.accent, shape: "circle", width: 1.3, label: "update " + k }]}
         overlay={epochDiamonds(exRun, k)}
-        ariaLabel="Loss over rate and fee with the SGD path; diamonds mark the end of each epoch"
+        ariaLabel="Loss over the two weights with the SGD path; diamonds mark the end of each epoch"
       />
     );
     side = (
@@ -167,7 +169,7 @@ export default function SGDLesson({ initialScreen }) {
           ]}
         />
         {screen === 1 ? (
-          <Note>Scrub through one epoch of the sorted log. Which way does the line tilt in the first half, and in the second?</Note>
+          <Note>Scrub through one epoch of the sorted data. Which way does the line tilt in the first half, and in the second?</Note>
         ) : (
           <Eq size={12.5}>
             for each epoch:
@@ -186,7 +188,7 @@ export default function SGDLesson({ initialScreen }) {
     });
     question = (
       <>
-        A second city: 60 orders, and again the log is stored sorted by distance. You can afford {EPOCHS_C} passes over it (180 order reads). The fee rule must be fair at both ends: within €{fmt(TOL_C, 2)} of the best possible fee for a 1 km and an 8 km order. Pick the method, the visiting order and η.
+        A new dataset: 60 samples, again stored sorted by x. You can afford {EPOCHS_C} passes over it (180 sample gradients). The fitted line must be accurate at both ends: its prediction at x = 1 and at x = 8 within {fmt(TOL_C, 2)} of the best fit's. Pick the method, the visiting order and η.
       </>
     );
     stage = (
@@ -195,7 +197,7 @@ export default function SGDLesson({ initialScreen }) {
         target={C1.best}
         paths={[{ key: "c", pts: chRun.pts, color: chOk ? THEME.ok : THEME.accent, shape: methodC === "batch" ? "square" : "circle", width: 1.4, dash: methodC === "batch" ? "6 4" : undefined, label: methodC === "batch" ? "batch" : "SGD" }]}
         overlay={methodC === "batch" ? undefined : epochDiamonds(chRun, chRun.pts.length)}
-        ariaLabel="Loss over rate and fee for the second city with your run"
+        ariaLabel="Loss over the two weights for the new dataset with your run"
       />
     );
     side = (
@@ -207,15 +209,15 @@ export default function SGDLesson({ initialScreen }) {
           <Readout
             rows={[
               ["updates made", methodC === "batch" ? EPOCHS_C : 60 * EPOCHS_C],
-              ["worst fee error at 1 km / 8 km", chRun.diverged ? "diverged" : "€" + fmt(chFair, 3)],
+              ["worst prediction error at x = 1 / x = 8", chRun.diverged ? "diverged" : fmt(chFair, 3)],
             ]}
           />
-          <Goal met={chOk}>both fees within €{fmt(TOL_C, 2)} of the best fit</Goal>
+          <Goal met={chOk}>both predictions within {fmt(TOL_C, 2)} of the best fit</Goal>
           {methodC === "sgd" && orderC === "shuffle" && <Btn onClick={reshuffle}>new shuffle (seed {seedC})</Btn>}
           <Hint
             hints={[
               "Batch makes only 3 updates in 3 passes. Is that enough, whatever η is?",
-              "With the sorted log, the last orders of each pass are all long trips, so the pass always ends tilted toward them. Change the visiting order (any well-mixed order removes that structure), then tune η: big enough to arrive in 180 updates, small enough that the last few single-order kicks do not throw the line off. Around 0.02 is a good region.",
+              "With sorted data, the last samples of each pass all have large x, so the pass always ends tilted toward them. Change the visiting order (any well-mixed order removes that structure), then tune η: big enough to arrive in 180 updates, small enough that the last few single-sample kicks do not throw the line off. Around 0.02 is a good region.",
             ]}
           />
         </Panel>
@@ -224,5 +226,5 @@ export default function SGDLesson({ initialScreen }) {
     );
   }
 
-  return <LessonFrame screen={screen} onScreen={setScreen} title="One order at a time" question={question} stage={stage} side={side} />;
+  return <LessonFrame screen={screen} onScreen={setScreen} title="One sample at a time" question={question} stage={stage} side={side} />;
 }
